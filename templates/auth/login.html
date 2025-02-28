@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Вход | Химия{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/forms.css">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <h2>Вход в систему</h2>
+    
+    <div class="message-box" id="message-box" style="display: none;"></div>
+    
+    <form id="login-form" class="auth-form">
+        <div class="form-group">
+            <label for="username">Имя пользователя или Email</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Пароль</label>
+            <div class="password-field">
+                <input type="password" id="password" name="password" required>
+                <button type="button" class="password-toggle" aria-label="Показать/скрыть пароль">
+                    <i class="fa fa-eye-slash" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Войти</button>
+            <p>Нет аккаунта? <a href="/app/register">Зарегистрироваться</a></p>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/login.js"></script>
+{% endblock %} 

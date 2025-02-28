@@ -4,18 +4,22 @@ from django.utils.translation import gettext_lazy as _
 
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
-        ('teacher', 'Учитель'),
         ('student', 'Ученик'),
+        ('teacher', 'Учитель'),
     )
     
     user_type = models.CharField(
-        _('тип пользователя'),
         max_length=10,
         choices=USER_TYPE_CHOICES,
-        default='student'
+        default='student',
+        verbose_name=_('тип пользователя')
     )
     
-    grade = models.CharField(max_length=20, blank=True)
+    grade = models.CharField(
+        max_length=10,
+        blank=True,
+        verbose_name=_('класс')
+    )
     
     def is_teacher(self):
         return self.user_type == 'teacher'
