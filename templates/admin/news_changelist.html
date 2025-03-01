@@ -1,0 +1,25 @@
+{% extends 'admin/change_list.html' %}
+
+{% block object-tools %}
+<div class="object-tools">
+    <ul class="object-tools-items">
+        <li>
+            <a href="{% url 'admin:add_news' %}" class="addlink">
+                Добавить новость
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'admin:add_article' %}" class="addlink">
+                Добавить статью
+            </a>
+        </li>
+        {% if has_add_permission %}
+        <li>
+            <a href="{% url 'admin:app_news_add' %}" class="addlink">
+                Добавить запись
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</div>
+{% endblock %} 

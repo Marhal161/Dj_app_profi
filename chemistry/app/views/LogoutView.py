@@ -10,6 +10,10 @@ class LogoutView(APIView):
     def get(request):
         try:
             refresh_token = request.COOKIES.get('refresh_token')
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()  # Инвалидация токена
+            
             response = Response({
                 'success': True,
                 'message': 'Вы успешно вышли из системы',

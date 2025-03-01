@@ -1,1 +1,185 @@
- 
+{% extends 'base.html' %}
+
+{% block title %}Главная | Химия{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/home.css">
+{% endblock %}
+
+{% block content %}
+<div class="home-container">
+    <section class="hero-section">
+        <div class="hero-content fade-in">
+            <h1>Добро пожаловать на портал по химии</h1>
+            <p>Изучайте химию с помощью современных интерактивных материалов, тестов и заданий. Следите за новостями и обновлениями на нашем портале.</p>
+            <div class="cta-buttons">
+                {% if is_authenticated %}
+                    <a href="/app/materials/" class="btn btn-primary"><i class="fas fa-book"></i> Учебные материалы</a>
+                    <a href="/app/profile/" class="btn btn-secondary"><i class="fas fa-user"></i> Личный кабинет</a>
+                {% else %}
+                    <a href="/app/register/" class="btn btn-primary"><i class="fas fa-user-plus"></i> Начать обучение</a>
+                    <a href="#news" class="btn btn-outline"><i class="fas fa-arrow-down"></i> Новости</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="hero-image fade-in">
+            <img src="/static/images/chemistry-hero.jpg" alt="Химия" onerror="this.src='/static/images/chemistry-placeholder.svg'">
+        </div>
+    </section>
+    
+    <section id="news" class="news-section">
+        <div class="section-header">
+            <h2>Новости и обновления</h2>
+            <p>Будьте в курсе последних событий и обновлений на нашем портале</p>
+        </div>
+        
+        <div class="news-container">
+            {% if news_list %}
+                {% for news in news_list %}
+                    <article class="news-card hover-lift" data-category="{{ news.category }}">
+                        {% if news.image %}
+                            <div class="news-image">
+                                <img src="{{ news.image.url }}" alt="{{ news.title }}">
+                                <div class="news-category">{{ news.get_category_display }}</div>
+                            </div>
+                        {% endif %}
+                        <div class="news-content">
+                            <div class="news-meta">
+                                <span class="news-date"><i class="far fa-calendar-alt"></i> {{ news.created_at|date:"d.m.Y" }}</span>
+                                {% if news.author %}
+                                    <span class="news-author"><i class="far fa-user"></i> {{ news.author.username }}</span>
+                                {% endif %}
+                            </div>
+                            <h3 class="news-title">{{ news.title }}</h3>
+                            <p class="news-excerpt">{{ news.content|truncatewords:30 }}</p>
+                            <a href="{% url 'news_detail' news.id %}" class="news-read-more">Читать далее <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </article>
+                {% endfor %}
+            {% else %}
+                <div class="no-news">
+                    <div class="no-news-icon">
+                        <i class="far fa-newspaper"></i>
+                    </div>
+                    <h3>Новости скоро появятся</h3>
+                    <p>В данный момент новостей нет. Заходите позже!</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        {% if news_list.has_other_pages %}
+            <div class="pagination">
+                {% if news_list.has_previous %}
+                    <a href="?page={{ news_list.previous_page_number }}" class="pagination-item"><i class="fas fa-chevron-left"></i></a>
+                {% endif %}
+                
+                {% for i in news_list.paginator.page_range %}
+                    {% if news_list.number == i %}
+                        <span class="pagination-item active">{{ i }}</span>
+                    {% else %}
+                        <a href="?page={{ i }}" class="pagination-item">{{ i }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if news_list.has_next %}
+                    <a href="?page={{ news_list.next_page_number }}" class="pagination-item"><i class="fas fa-chevron-right"></i></a>
+                {% endif %}
+            </div>
+        {% endif %}
+        
+        <div class="news-categories">
+            <button class="category-filter active" data-category="all">Все</button>
+            <button class="category-filter" data-category="announcement">Объявления</button>
+            <button class="category-filter" data-category="update">Обновления</button>
+            <button class="category-filter" data-category="event">События</button>
+            <button class="category-filter" data-category="article">Статьи</button>
+        </div>
+    </section>
+    
+    <section class="features-section">
+        <div class="section-header">
+            <h2>Возможности портала</h2>
+            <p>Изучайте химию с помощью современных инструментов</p>
+        </div>
+        
+        <div class="features-grid">
+            <div class="feature-card slide-in-left" data-delay="0">
+                <div class="feature-icon">
+                    <i class="fas fa-flask"></i>
+                </div>
+                <h3>Учебные материалы</h3>
+                <p>Доступ к обширной базе учебных материалов по химии, включая интерактивные уроки, видео и презентации.</p>
+            </div>
+            
+            <div class="feature-card slide-in-left" data-delay="200">
+                <div class="feature-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <h3>Тесты и задания</h3>
+                <p>Проверьте свои знания с помощью интерактивных тестов и заданий разного уровня сложности.</p>
+            </div>
+            
+            <div class="feature-card slide-in-left" data-delay="400">
+                <div class="feature-icon">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <h3>Для учителей</h3>
+                <p>Инструменты для создания и проверки заданий, отслеживания прогресса учеников и формирования отчетов.</p>
+            </div>
+            
+            <div class="feature-card slide-in-left" data-delay="600">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3>Отслеживание прогресса</h3>
+                <p>Наблюдайте за своим прогрессом в обучении и получайте рекомендации для дальнейшего развития.</p>
+            </div>
+        </div>
+    </section>
+    
+    <section class="cta-section fade-in">
+        <h2>{% if is_authenticated %}Продолжите изучение химии{% else %}Начните изучать химию прямо сейчас{% endif %}</h2>
+        <div class="cta-buttons">
+            {% if is_authenticated %}
+                <a href="/app/materials/" class="btn btn-primary"><i class="fas fa-book"></i> Перейти к материалам</a>
+                <a href="/app/tests/" class="btn btn-secondary"><i class="fas fa-vial"></i> Пройти тесты</a>
+            {% else %}
+                <a href="/app/register/" class="btn btn-primary"><i class="fas fa-user-plus"></i> Зарегистрироваться</a>
+                <a href="/app/login/" class="btn btn-secondary"><i class="fas fa-sign-in-alt"></i> Войти</a>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/animations.js"></script>
+<script>
+    // Фильтрация новостей по категориям
+    document.addEventListener('DOMContentLoaded', function() {
+        const categoryButtons = document.querySelectorAll('.category-filter');
+        const newsCards = document.querySelectorAll('.news-card');
+        
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Удаляем активный класс со всех кнопок
+                categoryButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Добавляем активный класс на нажатую кнопку
+                this.classList.add('active');
+                
+                const category = this.getAttribute('data-category');
+                
+                // Показываем/скрываем новости в зависимости от выбранной категории
+                newsCards.forEach(card => {
+                    if (category === 'all' || card.getAttribute('data-category') === category) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %} 

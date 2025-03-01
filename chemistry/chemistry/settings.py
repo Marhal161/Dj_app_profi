@@ -204,3 +204,15 @@ AUTHENTICATION_BACKENDS = [
     'app.auth.EmailOrUsernameModelBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+# Настройки для JWT
+JWT_AUTH = {
+    'JWT_SECRET_KEY': SECRET_KEY,
+    'JWT_ALGORITHM': 'HS256',
+    'JWT_ALLOW_REFRESH': True,
+    'JWT_EXPIRATION_DELTA': timedelta(hours=1),
+    'JWT_REFRESH_EXPIRATION_DELTA': timedelta(days=7),
+}
+
+# Базовый URL API - убедитесь, что он указывает на ваш сервер
+API_BASE_URL = 'http://localhost:8000'  # Измените на ваш URL, если он отличается

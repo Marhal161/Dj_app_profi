@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+
+{% block title %}Статьи | Химия{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/articles.css">
+{% endblock %}
+
+{% block content %}
+<div class="articles-container">
+    <div class="articles-header">
+        <h1>Статьи по химии</h1>
+        <p>Полезные материалы, исследования и интересные факты из мира химии</p>
+    </div>
+    
+    <div class="articles-controls">
+        <div class="articles-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="article-search" placeholder="Поиск статей...">
+        </div>
+        
+        <div class="articles-filters">
+            <div class="filter-dropdown">
+                <button class="filter-dropdown-btn" id="category-filter-btn">
+                    <span>Категория</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="filter-dropdown-content" id="category-filter-content">
+                    <div class="filter-option active" data-category="all">
+                        <input type="radio" name="category" id="cat-all" checked>
+                        <label for="cat-all">Все категории</label>
+                    </div>
+                    <div class="filter-option" data-category="organic">
+                        <input type="radio" name="category" id="cat-organic">
+                        <label for="cat-organic">Органическая химия</label>
+                    </div>
+                    <div class="filter-option" data-category="inorganic">
+                        <input type="radio" name="category" id="cat-inorganic">
+                        <label for="cat-inorganic">Неорганическая химия</label>
+                    </div>
+                    <div class="filter-option" data-category="biochemistry">
+                        <input type="radio" name="category" id="cat-biochemistry">
+                        <label for="cat-biochemistry">Биохимия</label>
+                    </div>
+                    <div class="filter-option" data-category="physical">
+                        <input type="radio" name="category" id="cat-physical">
+                        <label for="cat-physical">Физическая химия</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-dropdown">
+                <button class="filter-dropdown-btn" id="sort-filter-btn">
+                    <span>Сортировка</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="filter-dropdown-content" id="sort-filter-content">
+                    <div class="filter-option active" data-sort="newest">
+                        <input type="radio" name="sort" id="sort-newest" checked>
+                        <label for="sort-newest">Сначала новые</label>
+                    </div>
+                    <div class="filter-option" data-sort="oldest">
+                        <input type="radio" name="sort" id="sort-oldest">
+                        <label for="sort-oldest">Сначала старые</label>
+                    </div>
+                    <div class="filter-option" data-sort="az">
+                        <input type="radio" name="sort" id="sort-az">
+                        <label for="sort-az">По алфавиту (А-Я)</label>
+                    </div>
+                    <div class="filter-option" data-sort="za">
+                        <input type="radio" name="sort" id="sort-za">
+                        <label for="sort-za">По алфавиту (Я-А)</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="articles-grid">
+        {% if articles_list %}
+            {% for article in articles_list %}
+                <article class="article-card" data-category="{{ article.category }}">
+                    {% if article.image %}
+                        <div class="article-image">
+                            <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">
+                            <div class="article-category">{{ article.get_category_display }}</div>
+                        </div>
+                    {% endif %}
+                    <div class="article-content">
+                        <div class="article-meta">
+                            <span class="article-date"><i class="far fa-calendar-alt"></i> {{ article.created_at|date:"d.m.Y" }}</span>
+                            {% if article.author %}
+                                <span class="article-author"><i class="far fa-user"></i> {{ article.author.username }}</span>
+                            {% endif %}
+                        </div>
+                        <h3 class="article-title">{{ article.title }}</h3>
+                        <p class="article-excerpt">{{ article.content|truncatewords:30 }}</p>
+                        <a href="{% url 'article_detail' article.id %}" class="article-read-more">Читать статью <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </article>
+            {% endfor %}
+        {% else %}
+            <div class="no-articles">
+                <div class="no-articles-icon">
+                    <i class="far fa-file-alt"></i>
+                </div>
+                <h3>Статьи скоро появятся</h3>
+                <p>В данный момент статьи еще не опубликованы. Пожалуйста, загляните позже.</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    {% if is_paginated %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page=1" class="pagination-btn"><i class="fas fa-angle-double-left"></i></a>
+                <a href="?page={{ page_obj.previous_page_number }}" class="pagination-btn"><i class="fas fa-angle-left"></i></a>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <a href="?page={{ num }}" class="pagination-btn active">{{ num }}</a>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}" class="pagination-btn">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="pagination-btn"><i class="fas fa-angle-right"></i></a>
+                <a href="?page={{ page_obj.paginator.num_pages }}" class="pagination-btn"><i class="fas fa-angle-double-right"></i></a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Функционал выпадающих меню фильтров
+        const categoryBtn = document.getElementById('category-filter-btn');
+        const categoryContent = document.getElementById('category-filter-content');
+        const sortBtn = document.getElementById('sort-filter-btn');
+        const sortContent = document.getElementById('sort-filter-content');
+        
+        // Обработчик для кнопки категорий
+        categoryBtn.addEventListener('click', function() {
+            categoryBtn.classList.toggle('active');
+            categoryContent.classList.toggle('show');
+            // Закрываем другое меню, если оно открыто
+            sortBtn.classList.remove('active');
+            sortContent.classList.remove('show');
+        });
+        
+        // Обработчик для кнопки сортировки
+        sortBtn.addEventListener('click', function() {
+            sortBtn.classList.toggle('active');
+            sortContent.classList.toggle('show');
+            // Закрываем другое меню, если оно открыто
+            categoryBtn.classList.remove('active');
+            categoryContent.classList.remove('show');
+        });
+        
+        // Закрытие меню при клике вне его
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.filter-dropdown')) {
+                categoryBtn.classList.remove('active');
+                categoryContent.classList.remove('show');
+                sortBtn.classList.remove('active');
+                sortContent.classList.remove('show');
+            }
+        });
+        
+        // Фильтрация по категориям
+        const categoryOptions = document.querySelectorAll('#category-filter-content .filter-option');
+        const articleCards = document.querySelectorAll('.article-card');
+        
+        categoryOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // Обновляем активный класс
+                categoryOptions.forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Обновляем текст кнопки
+                categoryBtn.querySelector('span').textContent = this.querySelector('label').textContent;
+                
+                // Закрываем меню
+                categoryContent.classList.remove('show');
+                categoryBtn.classList.remove('active');
+                
+                // Фильтруем статьи
+                const category = this.getAttribute('data-category');
+                
+                articleCards.forEach(card => {
+                    if (category === 'all' || card.getAttribute('data-category') === category) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Сортировка статей
+        const sortOptions = document.querySelectorAll('#sort-filter-content .filter-option');
+        const articlesGrid = document.querySelector('.articles-grid');
+        
+        sortOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // Обновляем активный класс
+                sortOptions.forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Обновляем текст кнопки
+                sortBtn.querySelector('span').textContent = this.querySelector('label').textContent;
+                
+                // Закрываем меню
+                sortContent.classList.remove('show');
+                sortBtn.classList.remove('active');
+                
+                // Сортируем статьи
+                const sort = this.getAttribute('data-sort');
+                const articles = Array.from(articleCards);
+                
+                switch(sort) {
+                    case 'newest':
+                        articles.sort((a, b) => {
+                            const dateA = new Date(a.querySelector('.article-date').textContent.trim());
+                            const dateB = new Date(b.querySelector('.article-date').textContent.trim());
+                            return dateB - dateA;
+                        });
+                        break;
+                    case 'oldest':
+                        articles.sort((a, b) => {
+                            const dateA = new Date(a.querySelector('.article-date').textContent.trim());
+                            const dateB = new Date(b.querySelector('.article-date').textContent.trim());
+                            return dateA - dateB;
+                        });
+                        break;
+                    case 'az':
+                        articles.sort((a, b) => {
+                            const titleA = a.querySelector('.article-title').textContent.trim();
+                            const titleB = b.querySelector('.article-title').textContent.trim();
+                            return titleA.localeCompare(titleB);
+                        });
+                        break;
+                    case 'za':
+                        articles.sort((a, b) => {
+                            const titleA = a.querySelector('.article-title').textContent.trim();
+                            const titleB = b.querySelector('.article-title').textContent.trim();
+                            return titleB.localeCompare(titleA);
+                        });
+                        break;
+                }
+                
+                // Перестраиваем DOM
+                articles.forEach(article => {
+                    articlesGrid.appendChild(article);
+                });
+            });
+        });
+        
+        // Поиск по статьям
+        const searchInput = document.getElementById('article-search');
+        
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            articleCards.forEach(card => {
+                const title = card.querySelector('.article-title').textContent.toLowerCase();
+                const excerpt = card.querySelector('.article-excerpt').textContent.toLowerCase();
+                
+                if (title.includes(searchTerm) || excerpt.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %} 

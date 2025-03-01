@@ -1,0 +1,509 @@
+/* Современные стили для детальной страницы статьи */
+.article-detail-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* Хлебные крошки */
+.article-breadcrumbs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 30px;
+    font-size: 1.4rem;
+}
+
+.article-breadcrumbs a {
+    color: var(--text-light);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.article-breadcrumbs a:hover {
+    color: var(--primary-color);
+}
+
+.article-breadcrumbs .separator {
+    color: var(--text-lighter);
+    font-size: 1.2rem;
+}
+
+.article-breadcrumbs .current {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+/* Заголовок и мета-информация */
+.article-header {
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.article-header::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 0;
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    border-radius: 2px;
+}
+
+.article-title {
+    font-size: 3.6rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--text-color);
+    margin-bottom: 20px;
+    letter-spacing: -0.5px;
+}
+
+.article-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 30px;
+    justify-content: flex-start;
+}
+
+.article-meta span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.5rem;
+    color: var(--text-light);
+    padding: 5px 10px;
+    background-color: var(--bg-dark);
+    border-radius: var(--radius-sm);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.article-meta span:hover {
+    background-color: var(--primary-light);
+    color: white;
+}
+
+.article-meta i {
+    color: var(--primary-color);
+}
+
+.article-meta span:hover i {
+    color: white;
+}
+
+/* Изображение статьи */
+.article-image {
+    margin-bottom: 30px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    position: relative;
+}
+
+.article-image::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 50%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.article-image img {
+    width: 100%;
+    max-height: 500px;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s ease;
+}
+
+.article-image:hover img {
+    transform: scale(1.02);
+}
+
+/* Содержимое статьи */
+.article-content {
+    font-size: 1.8rem;
+    line-height: 1.8;
+    color: var(--text-color);
+    margin-bottom: 50px;
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    display: block;
+    width: 100%;
+}
+
+.article-content p {
+    margin-bottom: 25px;
+    opacity: 1 !important;
+    display: block;
+}
+
+.article-content h2 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    margin: 40px 0 20px;
+    color: var(--text-color);
+}
+
+.article-content h3 {
+    font-size: 2.4rem;
+    font-weight: 600;
+    margin: 30px 0 15px;
+    color: var(--text-color);
+}
+
+.article-content ul, 
+.article-content ol {
+    margin: 20px 0;
+    padding-left: 25px;
+}
+
+.article-content li {
+    margin-bottom: 10px;
+}
+
+.article-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+    margin: 30px 0;
+    box-shadow: var(--shadow-sm);
+}
+
+.article-content blockquote {
+    margin: 30px 0;
+    padding: 20px 30px;
+    border-left: 5px solid var(--primary-color);
+    background-color: var(--bg-dark);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-style: italic;
+    color: var(--text-light);
+}
+
+.article-content code {
+    font-family: var(--font-mono);
+    background-color: var(--bg-dark);
+    padding: 2px 6px;
+    border-radius: var(--radius-xs);
+    font-size: 0.9em;
+}
+
+.article-content pre {
+    background-color: var(--bg-dark);
+    padding: 20px;
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    margin: 30px 0;
+}
+
+.article-content pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.article-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 30px 0;
+}
+
+.article-content th, 
+.article-content td {
+    padding: 12px 15px;
+    border: 1px solid var(--bg-dark);
+    text-align: left;
+}
+
+.article-content th {
+    background-color: var(--bg-dark);
+    font-weight: 600;
+}
+
+.article-content tr:nth-child(even) {
+    background-color: var(--bg-light);
+}
+
+.article-content tr:hover {
+    background-color: var(--bg-dark);
+}
+
+/* Кнопки социальных сетей */
+.article-share {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 40px 0;
+    padding: 20px;
+    background-color: var(--bg-dark);
+    border-radius: var(--radius-md);
+}
+
+.article-share-title {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-right: 10px;
+}
+
+.article-share-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.share-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--bg-light);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+}
+
+.share-button:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-sm);
+}
+
+.share-button.facebook:hover {
+    background-color: #3b5998;
+    color: white;
+}
+
+.share-button.twitter:hover {
+    background-color: #1da1f2;
+    color: white;
+}
+
+.share-button.linkedin:hover {
+    background-color: #0077b5;
+    color: white;
+}
+
+.share-button.telegram:hover {
+    background-color: #0088cc;
+    color: white;
+}
+
+/* Похожие статьи */
+.related-articles {
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 1px solid var(--bg-dark);
+}
+
+.related-articles-title {
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: 30px;
+    color: var(--text-color);
+    position: relative;
+    display: inline-block;
+}
+
+.related-articles-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    border-radius: 2px;
+}
+
+.related-articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.related-article-card {
+    background-color: var(--bg-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.related-article-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.related-article-image {
+    height: 180px;
+    overflow: hidden;
+}
+
+.related-article-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.related-article-card:hover .related-article-image img {
+    transform: scale(1.05);
+}
+
+.related-article-content {
+    padding: 20px;
+}
+
+.related-article-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+.related-article-excerpt {
+    font-size: 1.4rem;
+    color: var(--text-light);
+    margin-bottom: 15px;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.related-article-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: gap 0.3s ease;
+}
+
+.related-article-link:hover {
+    gap: 8px;
+}
+
+/* Навигация по статьям */
+.article-navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 60px;
+    padding-top: 30px;
+    border-top: 1px solid var(--bg-dark);
+}
+
+.article-nav-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background-color: var(--bg-light);
+    border: 2px solid var(--bg-dark);
+    border-radius: var(--radius-full);
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--text-color);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.article-nav-button:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.article-nav-button.prev {
+    padding-left: 15px;
+}
+
+.article-nav-button.next {
+    padding-right: 15px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .article-title {
+        font-size: 2.8rem;
+    }
+    
+    .article-content {
+        font-size: 1.6rem;
+    }
+    
+    .article-content h2 {
+        font-size: 2.4rem;
+    }
+    
+    .article-content h3 {
+        font-size: 2rem;
+    }
+    
+    .related-articles-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .article-navigation {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+/* Темная тема */
+@media (prefers-color-scheme: dark) {
+    .article-content {
+        color: #e1e1e1;
+    }
+    
+    .article-content h2,
+    .article-content h3 {
+        color: #f1f1f1;
+    }
+    
+    .article-content blockquote {
+        background-color: #2a2d3a;
+        color: #b0b0b0;
+    }
+    
+    .article-content code {
+        background-color: #2a2d3a;
+    }
+    
+    .article-share {
+        background-color: #2a2d3a;
+    }
+    
+    .share-button {
+        background-color: #3f4252;
+        color: #e1e1e1;
+    }
+    
+    .related-article-card {
+        background-color: #2a2d3a;
+    }
+    
+    .related-article-title {
+        color: #e1e1e1;
+    }
+    
+    .related-article-excerpt {
+        color: #b0b0b0;
+    }
+    
+    .article-nav-button {
+        background-color: #2a2d3a;
+        border-color: #3f4252;
+        color: #e1e1e1;
+    }
+} 

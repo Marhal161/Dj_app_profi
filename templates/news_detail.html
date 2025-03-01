@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ news.title }} | Химия{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/article_detail.css">
+{% endblock %}
+
+{% block content %}
+<div class="article-detail-container">
+    <div class="article-breadcrumbs">
+        <a href="/app/">Главная</a>
+        <span class="separator"><i class="fas fa-chevron-right"></i></span>
+        <a href="/app/#news">Новости</a>
+        <span class="separator"><i class="fas fa-chevron-right"></i></span>
+        <span class="current">{{ news.title }}</span>
+    </div>
+    
+    <div class="article-header">
+        <h1 class="article-title">{{ news.title }}</h1>
+        <div class="article-meta">
+            <span class="article-date"><i class="far fa-calendar-alt"></i> {{ news.created_at|date:"d.m.Y" }}</span>
+            {% if news.author %}
+                <span class="article-author"><i class="far fa-user"></i> {{ news.author.username }}</span>
+            {% endif %}
+            <span class="article-category"><i class="far fa-folder"></i> {{ news.get_category_display }}</span>
+        </div>
+    </div>
+    
+    {% if news.image %}
+        <div class="article-image">
+            <img src="{{ news.image.url }}" alt="{{ news.title }}" class="article-detail-image">
+        </div>
+    {% endif %}
+    
+    <div class="article-content">
+        {{ news.content|safe }}
+    </div>
+    
+    <div class="article-share">
+        <span class="article-share-title">Поделиться новостью:</span>
+        <div class="article-share-buttons">
+            <a href="#" class="share-button facebook" title="Поделиться в Facebook">
+                <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="#" class="share-button twitter" title="Поделиться в Twitter">
+                <i class="fab fa-twitter"></i>
+            </a>
+            <a href="#" class="share-button linkedin" title="Поделиться в LinkedIn">
+                <i class="fab fa-linkedin-in"></i>
+            </a>
+            <a href="#" class="share-button telegram" title="Поделиться в Telegram">
+                <i class="fab fa-telegram-plane"></i>
+            </a>
+        </div>
+    </div>
+    
+    {% if related_news %}
+        <div class="related-articles">
+            <h2 class="related-articles-title">Похожие новости</h2>
+            <div class="related-articles-grid">
+                {% for related in related_news %}
+                    <div class="related-article-card">
+                        {% if related.image %}
+                            <div class="related-article-image">
+                                <img src="{{ related.image.url }}" alt="{{ related.title }}" loading="lazy">
+                            </div>
+                        {% endif %}
+                        <div class="related-article-content">
+                            <h3 class="related-article-title">{{ related.title }}</h3>
+                            <p class="related-article-excerpt">{{ related.content|truncatewords:15 }}</p>
+                            <a href="{% url 'news_detail' related.id %}" class="related-article-link">
+                                Читать новость <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    
+    <div class="article-navigation">
+        <a href="/app/#news" class="article-nav-button prev">
+            <i class="fas fa-arrow-left"></i> Вернуться к новостям
+        </a>
+        <a href="#" class="article-nav-button next">
+            Следующая новость <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Удаляем анимацию, которая может скрывать контент
+        const articleContent = document.querySelector('.article-content');
+        if (articleContent) {
+            articleContent.style.opacity = '1';
+            articleContent.style.transform = 'translateY(0)';
+        }
+        
+        // Функциональность кнопок поделиться
+        const shareButtons = document.querySelectorAll('.share-button');
+        
+        shareButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const url = encodeURIComponent(window.location.href);
+                const title = encodeURIComponent(document.title);
+                
+                let shareUrl;
+                
+                if (this.classList.contains('facebook')) {
+                    shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+                } else if (this.classList.contains('twitter')) {
+                    shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
+                } else if (this.classList.contains('linkedin')) {
+                    shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
+                } else if (this.classList.contains('telegram')) {
+                    shareUrl = `https://t.me/share/url?url=${url}&text=${title}`;
+                }
+                
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            });
+        });
+    });
+</script>
+{% endblock %} 

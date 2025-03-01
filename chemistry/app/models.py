@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
@@ -32,30 +33,49 @@ class User(AbstractUser):
         verbose_name_plural = _('пользователи')
 
 class News(models.Model):
-    title = models.CharField(max_length=200)
-    content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    CATEGORY_CHOICES = (
+        ('announcement', 'Объявление'),
+        ('update', 'Обновление'),
+        ('event', 'Событие'),
+        ('article', 'Статья'),
+    )
+    
+    CONTENT_TYPE_CHOICES = (
+        ('news', 'Новость'),
+        ('article', 'Статья'),
+    )
+    
+    title = models.CharField(max_length=200, verbose_name='Заголовок')
+    content = models.TextField(verbose_name='Содержание')
+    image = models.ImageField(upload_to='news_images/', blank=True, null=True, verbose_name='Изображение')
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='announcement', verbose_name='Категория')
+    content_type = models.CharField(max_length=10, choices=CONTENT_TYPE_CHOICES, default='news', verbose_name='Тип контента')
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Автор')
+    created_at = models.DateTimeField(default=timezone.now, verbose_name='Дата создания')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
+    is_published = models.BooleanField(default=True, verbose_name='Опубликовано')
     
     def __str__(self):
         return self.title
     
+    def get_category_display(self):
+        return dict(self.CATEGORY_CHOICES).get(self.category, '')
+    
     class Meta:
-        verbose_name = _('новость')
-        verbose_name_plural = _('новости')
+        verbose_name = 'новость'
+        verbose_name_plural = 'новости'
+        ordering = ['-created_at']
 
-class Article(models.Model):
-    title = models.CharField(max_length=200)
-    content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='articles')
-    category = models.ForeignKey('Category', on_delete=models.SET_NULL, null=True, blank=True)
-    
-    def __str__(self):
-        return self.title
-    
+class Article(News):
     class Meta:
-        verbose_name = _('статья')
-        verbose_name_plural = _('статьи')
+        proxy = True
+        verbose_name = 'статья'
+        verbose_name_plural = 'статьи'
+
+    def save(self, *args, **kwargs):
+        self.content_type = 'article'
+        self.category = 'article'
+        super().save(*args, **kwargs)
 
 class Material(models.Model):
     title = models.CharField(max_length=200)
