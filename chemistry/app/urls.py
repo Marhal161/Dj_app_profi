@@ -6,14 +6,14 @@ from .views.RegisterView import RegisterView
 from .views.LoginView import LoginView
 from .views.auth_views import LoginPageView, RegisterPageView
 from .views.LogoutView import LogoutView
-from .views.home_views import HomePageView
+from .views.HomeView import HomePageView
 from .views import NewsView
-from .views import article_views
+from .views import ArticleView
 
 # Создаем роутер для API
 router = DefaultRouter()
 router.register(r'api/news', NewsView.NewsViewSet, basename='news')
-router.register(r'api/articles', article_views.ArticleViewSet, basename='articles')
+router.register(r'api/articles', ArticleView.ArticleViewSet, basename='articles')
 
 urlpatterns = [
     path('', HomePageView.as_view(), name='home_page'),
@@ -30,8 +30,8 @@ urlpatterns = [
     path('news/<int:pk>/', NewsView.NewsDetailView.as_view(), name='news_detail'),
     
     # URL для статей
-    path('articles/', article_views.ArticleListView.as_view(), name='articles_list'),
-    path('articles/<int:pk>/', article_views.ArticleDetailView.as_view(), name='article_detail'),
+    path('articles/', ArticleView.ArticleListView.as_view(), name='articles_list'),
+    path('articles/<int:pk>/', ArticleView.ArticleDetailView.as_view(), name='article_detail'),
     
     # Включаем все URL из роутера
     path('', include(router.urls)),
