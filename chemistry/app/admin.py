@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, News, Comment, Category, Test, Article, Material, ClassInvitation
+from .models import User, News, Comment, Category, Test, Article, Material, ClassInvitation, TestQuestion, TestAttempt, TestAnswer, QuestionImage
 
 class NewsAdmin(admin.ModelAdmin):
     list_display = ('title', 'category', 'created_at', 'is_published')
@@ -25,16 +25,29 @@ class ArticleAdmin(admin.ModelAdmin):
         }),
     )
 
+class QuestionImageInline(admin.TabularInline):
+    model = QuestionImage
+    extra = 2
+    fields = ['image', 'caption', 'order']
+
+class TestQuestionInline(admin.TabularInline):
+    model = TestQuestion
+    extra = 3
+    fields = ['question_type', 'question_text', 'answer', 'image', 'points', 'order']
+    inlines = [QuestionImageInline]
+
+@admin.register(Test)
 class TestAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'created_at')
-    list_filter = ('category', 'created_at')
-    search_fields = ('title',)
-    
-    fieldsets = (
-        (None, {
-            'fields': ('title', 'category')
-        }),
-    )
+    list_display = ('title', 'category', 'created_at', 'is_published')
+    list_filter = ('category', 'is_published', 'created_at')
+    search_fields = ('title', 'description')
+    inlines = [TestQuestionInline]
+
+@admin.register(TestAttempt)
+class TestAttemptAdmin(admin.ModelAdmin):
+    list_display = ('user', 'test', 'status', 'score', 'max_score', 'started_at', 'completed_at')
+    list_filter = ('status', 'test')
+    search_fields = ('user__username',)
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -52,7 +65,6 @@ admin.site.register(News, NewsAdmin)
 admin.site.register(Article, ArticleAdmin)
 admin.site.register(Comment)
 admin.site.register(Category)
-admin.site.register(Test, TestAdmin)
 
 # Регистрация модели Material в админке
 @admin.register(Material)
@@ -65,3 +77,18 @@ class MaterialAdmin(admin.ModelAdmin):
             'fields': ('title', 'content', 'image')
         }),
     )
+
+@admin.register(TestQuestion)
+class TestQuestionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'question_text_short', 'test', 'question_type', 'points')
+    list_filter = ('test', 'question_type')
+    search_fields = ('question_text',)
+    fields = ['test', 'question_type', 'question_text', 'answer', 'image', 'points', 'order']
+    inlines = [QuestionImageInline]
+    
+    def question_text_short(self, obj):
+        return obj.question_text[:50] + '...' if obj.question_text and len(obj.question_text) > 50 else obj.question_text
+    question_text_short.short_description = 'Вопрос'
+
+# В конце файла добавьте регистрацию новой модели, если она нужна отдельно
+admin.site.register(QuestionImage)

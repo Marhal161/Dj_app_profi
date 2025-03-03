@@ -11,6 +11,10 @@ from .views import NewsView
 from .views.ArticleView import ArticleViewSet, ArticleListView, ArticleDetailView
 from .views.ClassView import ClassView
 from .views.MaterialView import MaterialView
+from .views.TestView import (
+    TestListView, TestDetailView, TestTakeView, 
+    TestResultView, TestReviewView, TestReviewDetailView
+)
 
 # Создаем роутер для API
 router = DefaultRouter()
@@ -40,6 +44,13 @@ urlpatterns = [
     path('materials/', MaterialView.as_view(), name='materials'),
     path('materials/<int:material_id>/', MaterialView.as_view(), name='material_detail'),
     path('materials/delete/<int:material_id>/', MaterialView.as_view(), name='delete_material'),
+    path('tests/', TestListView.as_view(), name='test_list'),
+    path('tests/<int:test_id>/', TestDetailView.as_view(), name='test_detail'),
+    path('tests/<int:test_id>/take/<int:attempt_id>/', TestTakeView.as_view(), name='test_take'),
+    path('tests/<int:test_id>/result/<int:attempt_id>/', TestResultView.as_view(), name='test_result'),
+    path('tests/review/', TestReviewView.as_view(), name='test_review'),
+    path('tests/review/class/<int:class_id>/', TestReviewView.as_view(), name='test_review_class'),
+    path('tests/review/<int:attempt_id>/', TestReviewDetailView.as_view(), name='test_review_detail'),
 ]
 
 if settings.DEBUG:

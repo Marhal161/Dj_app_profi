@@ -38,7 +38,7 @@ class MaterialView(View):
             return render(request, self.detail_template, context)
         
         # Иначе показываем список всех материалов
-        materials = Material.objects.all()
+        materials = Material.objects.all().order_by('-created_at')
         context.update({
             'materials': materials,
             'title': 'Материалы'

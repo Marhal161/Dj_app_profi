@@ -112,8 +112,10 @@ class Category(models.Model):
 
 class Test(models.Model):
     title = models.CharField(max_length=200, verbose_name='Название')
+    description = models.TextField(verbose_name='Описание', blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name='Категория')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    is_published = models.BooleanField(default=True, verbose_name='Опубликован')
     
     def __str__(self):
         return self.title
@@ -123,17 +125,80 @@ class Test(models.Model):
         verbose_name_plural = _('тесты')
 
 class TestQuestion(models.Model):
+    QUESTION_TYPES = (
+        ('part_a', 'Часть A (краткий ответ)'),
+        ('part_b', 'Часть B (развернутый ответ)'),
+    )
+    
     test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='questions')
-    question = models.TextField()
-    answer = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    question_text = models.TextField(verbose_name='Текст вопроса', null=True, blank=True)
+    question_type = models.CharField(max_length=10, choices=QUESTION_TYPES, default='part_a', verbose_name='Тип вопроса')
+    answer = models.TextField(verbose_name='Правильный ответ', blank=True, help_text='Для вопросов части A')
+    image = models.ImageField(upload_to='question_images/', blank=True, null=True, verbose_name='Основное изображение')
+    points = models.PositiveIntegerField(default=1, verbose_name='Баллы')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
     
     def __str__(self):
-        return self.question
+        return f"{self.question_text[:50]}..."
     
     class Meta:
         verbose_name = _('вопрос теста')
         verbose_name_plural = _('вопросы теста')
+        ordering = ['order', 'id']
+
+class QuestionImage(models.Model):
+    question = models.ForeignKey(TestQuestion, on_delete=models.CASCADE, related_name='additional_images')
+    image = models.ImageField(upload_to='question_images/', verbose_name='Изображение')
+    caption = models.CharField(max_length=255, blank=True, verbose_name='Подпись')
+    order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
+    
+    def __str__(self):
+        return f"Изображение {self.order+1} для вопроса {self.question.id}"
+    
+    class Meta:
+        verbose_name = _('изображение вопроса')
+        verbose_name_plural = _('изображения вопросов')
+        ordering = ['order']
+
+class TestAttempt(models.Model):
+    STATUS_CHOICES = (
+        ('in_progress', 'В процессе'),
+        ('completed', 'Завершен'),
+        ('awaiting_review', 'Ожидает проверки'),
+        ('reviewed', 'Проверен'),
+    )
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='test_attempts')
+    test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='attempts')
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='in_progress')
+    score = models.PositiveIntegerField(default=0)
+    max_score = models.PositiveIntegerField(default=0)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.test.title}"
+    
+    def get_percent_score(self):
+        if self.max_score == 0:
+            return 0
+        return int((self.score / self.max_score) * 100)
+    
+    class Meta:
+        unique_together = ['user', 'test']  # Один пользователь может пройти тест только один раз
+
+class TestAnswer(models.Model):
+    attempt = models.ForeignKey(TestAttempt, on_delete=models.CASCADE, related_name='answers')
+    question = models.ForeignKey(TestQuestion, on_delete=models.CASCADE)
+    answer_text = models.TextField(verbose_name='Ответ')
+    is_correct = models.BooleanField(null=True, blank=True, verbose_name='Правильно')
+    points_awarded = models.PositiveIntegerField(default=0, verbose_name='Начислено баллов')
+    teacher_comment = models.TextField(blank=True, verbose_name='Комментарий учителя')
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_answers')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"Ответ на вопрос {self.question.id}"
 
 class Class(models.Model):
     name = models.CharField(max_length=50, verbose_name=_('название класса'))

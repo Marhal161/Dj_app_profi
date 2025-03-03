@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load dict_filters %}
+
+{% block title %}{{ title }} | Химия{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/tests.css">
+{% endblock %}
+
+{% block content %}
+<div class="test-take-container">
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="test-header">
+        <h1>{{ test.title }}</h1>
+        <p>Прохождение теста</p>
+    </div>
+
+    <form method="POST" action="{% url 'test_take' test.id attempt.id %}" id="testForm">
+        {% csrf_token %}
+        
+        <div class="test-parts">
+            <!-- Часть A: Вопросы с кратким ответом -->
+            <div class="test-part">
+                <h2>Часть A: Вопросы с кратким ответом</h2>
+                <p class="part-description">В этой части необходимо дать краткий ответ на каждый вопрос. Ответы проверяются автоматически.</p>
+                
+                {% for question in questions %}
+                    {% if question.question_type == 'part_a' %}
+                        <div class="question-container">
+                            <div class="question-number">Вопрос {{ forloop.counter }}</div>
+                            <div class="question-content">
+                                <div class="question-text">{{ question.question_text|linebreaks }}</div>
+                                
+                                {% if question.image %}
+                                    <div class="question-image-primary">
+                                        <img src="{{ question.image.url }}" alt="Основное изображение к вопросу" class="img-fluid">
+                                    </div>
+                                {% endif %}
+                                
+                                {% if question.additional_images.exists %}
+                                    <div class="question-image-gallery">
+                                        {% for img in question.additional_images.all %}
+                                            <div class="gallery-item">
+                                                <img src="{{ img.image.url }}" alt="{{ img.caption }}" class="img-fluid">
+                                                {% if img.caption %}
+                                                    <div class="image-caption">{{ img.caption }}</div>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="answer-input">
+                                    <label for="answer_{{ question.id }}">Ваш ответ:</label>
+                                    <input type="text" id="answer_{{ question.id }}" name="answer_{{ question.id }}" class="form-control" 
+                                        value="{% if question.id in saved_answers %}{{ saved_answers|get:question.id }}{% endif %}">
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            
+            <!-- Часть B: Вопросы с развернутым ответом -->
+            <div class="test-part">
+                <h2>Часть B: Вопросы с развернутым ответом</h2>
+                <p class="part-description">В этой части необходимо дать полный, развернутый ответ. Ответы проверяются учителем.</p>
+                
+                {% for question in questions %}
+                    {% if question.question_type == 'part_b' %}
+                        <div class="question-container">
+                            <div class="question-number">Вопрос {{ forloop.counter }}</div>
+                            <div class="question-content">
+                                <div class="question-text">{{ question.question_text|linebreaks }}</div>
+                                
+                                {% if question.image %}
+                                    <div class="question-image-primary">
+                                        <img src="{{ question.image.url }}" alt="Основное изображение к вопросу" class="img-fluid">
+                                    </div>
+                                {% endif %}
+                                
+                                {% if question.additional_images.exists %}
+                                    <div class="question-image-gallery">
+                                        {% for img in question.additional_images.all %}
+                                            <div class="gallery-item">
+                                                <img src="{{ img.image.url }}" alt="{{ img.caption }}" class="img-fluid">
+                                                {% if img.caption %}
+                                                    <div class="image-caption">{{ img.caption }}</div>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="answer-input">
+                                    <label for="answer_{{ question.id }}">Ваш ответ:</label>
+                                    <textarea id="answer_{{ question.id }}" name="answer_{{ question.id }}" class="form-control" rows="6">{% if question.id in saved_answers %}{{ saved_answers|get:question.id }}{% endif %}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="form-buttons">
+            <button type="submit" name="save_answers" class="btn btn-secondary">
+                <i class="fas fa-save"></i> Сохранить ответы
+            </button>
+            <button type="submit" name="finish_test" class="btn btn-primary" onclick="return confirm('Вы уверены, что хотите завершить тест? После этого вы не сможете изменить свои ответы.')">
+                <i class="fas fa-check-circle"></i> Завершить тест
+            </button>
+        </div>
+    </form>
+</div>
+
+<div id="imageModal" class="image-modal">
+    <span class="modal-close">&times;</span>
+    <img class="modal-content" id="expandedImg">
+    <div id="modalCaption" class="modal-caption"></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Скрываем сообщения через 3 секунды
+        const messageDivs = document.querySelectorAll('.messages .alert');
+        messageDivs.forEach(function(message) {
+            setTimeout(function() {
+                message.style.opacity = '0';
+                setTimeout(function() {
+                    message.remove();
+                }, 300);
+            }, 3000);
+        });
+        
+        // Авто-сохранение ответов каждые 60 секунд
+        setInterval(function() {
+            const formData = new FormData(document.getElementById('testForm'));
+            formData.append('save_answers', 'true');
+            
+            fetch(document.getElementById('testForm').action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                // Прячем сообщения об автосохранении чтобы не отвлекать
+                console.log('Ответы автоматически сохранены');
+            })
+            .catch(error => {
+                console.error('Ошибка при автосохранении:', error);
+            });
+        }, 60000); // 60000 мс = 1 минута
+
+        // Код для модального окна просмотра изображений
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('expandedImg');
+        const captionText = document.getElementById('modalCaption');
+        const closeBtn = document.getElementsByClassName('modal-close')[0];
+        
+        // Получаем все изображения
+        const images = document.querySelectorAll('.question-image-primary img, .gallery-item img');
+        
+        images.forEach(img => {
+            img.onclick = function() {
+                modal.style.display = "block";
+                modalImg.src = this.src;
+                
+                // Находим подпись к изображению, если она есть
+                const caption = this.closest('.gallery-item')?.querySelector('.image-caption');
+                captionText.innerHTML = caption ? caption.innerHTML : '';
+            }
+        });
+        
+        // Закрытие модального окна
+        closeBtn.onclick = function() {
+            modal.style.display = "none";
+        }
+        
+        // Закрытие модального окна при клике вне изображения
+        modal.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        }
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load dict_filters %}
+
+{% block title %}{{ title }} | Химия{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/tests.css">
+{% endblock %}
+
+{% block content %}
+<div class="test-detail-container">
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <a href="{% url 'test_list' %}" class="btn btn-secondary back-button">
+        <i class="fas fa-arrow-left"></i> Назад к тестам
+    </a>
+    
+    <div class="test-header">
+        <h1>{{ test.title }}</h1>
+        <div class="test-meta">
+            <span class="category-badge">{{ test.category.title }}</span>
+            <span><i class="far fa-calendar-alt"></i> {{ test.created_at|date:"d.m.Y" }}</span>
+            <span><i class="far fa-question-circle"></i> {{ test.questions.count }} вопросов</span>
+        </div>
+    </div>
+
+    {% if test.description %}
+    <div class="test-description">
+        {{ test.description|linebreaks }}
+    </div>
+    {% endif %}
+
+    <div class="test-instructions">
+        <h3>Информация о тесте</h3>
+        <ul>
+            <li>Тест содержит {{ test.questions.count }} вопросов</li>
+            <li>Часть вопросов проверяется автоматически (Часть А)</li>
+            <li>Часть вопросов проверяется учителем (Часть B)</li>
+            <li>Внимательно читайте вопросы и давайте точные ответы</li>
+            <li>Вы можете сохранять ответы в процессе прохождения теста</li>
+            <li>После завершения теста вы не сможете изменить свои ответы</li>
+        </ul>
+    </div>
+
+    <div class="test-actions">
+        {% if attempt %}
+            {% if attempt.status == 'in_progress' %}
+                <a href="{% url 'test_take' test.id attempt.id %}" class="btn btn-primary">
+                    <i class="fas fa-play-circle"></i> Продолжить тест
+                </a>
+            {% elif attempt.status == 'awaiting_review' %}
+                <a href="{% url 'test_result' test.id attempt.id %}" class="btn btn-info">
+                    <i class="fas fa-eye"></i> Просмотреть ответы (ожидает проверки)
+                </a>
+                <p class="status-note">Часть B ожидает проверки учителем</p>
+            {% else %}
+                <a href="{% url 'test_result' test.id attempt.id %}" class="btn btn-success">
+                    <i class="fas fa-check-circle"></i> Просмотреть результаты
+                </a>
+                <p class="status-note">Тест пройден: {{ attempt.score }} из {{ attempt.max_score }} баллов ({{ attempt.get_percent_score }}%)</p>
+            {% endif %}
+        {% else %}
+            <form method="POST" action="{% url 'test_detail' test.id %}">
+                {% csrf_token %}
+                <button type="submit" name="start_test" class="btn btn-primary">
+                    <i class="fas fa-play-circle"></i> Начать тест
+                </button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Скрываем сообщения через 3 секунды
+        const messageDivs = document.querySelectorAll('.messages .alert');
+        messageDivs.forEach(function(message) {
+            setTimeout(function() {
+                message.style.opacity = '0';
+                setTimeout(function() {
+                    message.remove();
+                }, 300);
+            }, 3000);
+        });
+    });
+</script>
+{% endblock %} 
