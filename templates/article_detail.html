@@ -20,10 +20,6 @@
         <h1 class="article-title">{{ article.title }}</h1>
         <div class="article-meta">
             <span class="article-date"><i class="far fa-calendar-alt"></i> {{ article.created_at|date:"d.m.Y" }}</span>
-            {% if article.author %}
-                <span class="article-author"><i class="far fa-user"></i> {{ article.author.username }}</span>
-            {% endif %}
-            <span class="article-category"><i class="far fa-folder"></i> {{ article.get_category_display }}</span>
         </div>
     </div>
     
@@ -57,7 +53,7 @@
     
     {% if related_articles %}
         <div class="related-articles">
-            <h2 class="related-articles-title">Похожие статьи</h2>
+            <h2 class="related-articles-title">Другие статьи</h2>
             <div class="related-articles-grid">
                 {% for related in related_articles %}
                     <div class="related-article-card">

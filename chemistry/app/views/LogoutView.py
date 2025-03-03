@@ -2,35 +2,38 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.http import HttpResponse
 from django.shortcuts import redirect
+import logging
+
+logger = logging.getLogger(__name__)
 
 class LogoutView(APIView):
-    @staticmethod
-    def get(request):
+    def get(self, request):
         try:
+            # Получаем refresh token из куки
             refresh_token = request.COOKIES.get('refresh_token')
-            if refresh_token:
-                token = RefreshToken(refresh_token)
-                token.blacklist()  # Инвалидация токена
             
-            response = Response({
-                'success': True,
-                'message': 'Вы успешно вышли из системы',
-            }, status=status.HTTP_200_OK)
-
-            response.delete_cookie('access_token', path='/')
-            response.delete_cookie('refresh_token', path='/')
-
-            response["Access-Control-Allow-Credentials"] = "true"
-
+            # Создаем ответ для редиректа
+            response = redirect('home_page')
+            
+            # Удаляем куки независимо от наличия токена
+            response.delete_cookie('access_token')
+            response.delete_cookie('refresh_token')
+            
+            # Если есть refresh token, инвалидируем его
+            if refresh_token:
+                try:
+                    token = RefreshToken(refresh_token)
+                    token.blacklist()
+                    logger.debug("Token blacklisted successfully")
+                except Exception as e:
+                    logger.error(f"Error blacklisting token: {e}")
+            
             return response
-        
+            
         except Exception as e:
-            return Response({
-                'success': False,
-                'message': str(e),
-            }, status=status.HTTP_400_BAD_REQUEST)
+            logger.error(f"Error in LogoutView: {e}")
+            return redirect('home_page')
         
             
                 

@@ -2,7 +2,7 @@ import logging
 from django.shortcuts import redirect
 from django.urls import reverse
 from functools import wraps
-from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from django.contrib.auth import get_user_model
 import jwt
@@ -10,6 +10,7 @@ from django.conf import settings
 import json
 import requests
 from datetime import datetime, timedelta
+from django.contrib import messages
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,8 @@ def check_auth_tokens(view_func):
         access_token = request.COOKIES.get('access_token')
         refresh_token = request.COOKIES.get('refresh_token')
         
+        logger.debug(f"Checking tokens - Access: {bool(access_token)}, Refresh: {bool(refresh_token)}")
+        
         # Если нет токенов, пользователь не аутентифицирован
         if not access_token or not refresh_token:
             request.is_authenticated = False
@@ -28,137 +31,91 @@ def check_auth_tokens(view_func):
         
         try:
             # Пытаемся декодировать access_token
-            payload = jwt.decode(access_token, settings.SECRET_KEY, algorithms=['HS256'])
-            user_id = payload.get('user_id')
-            username = payload.get('username')
-            user_type = payload.get('user_type')
-            exp = payload.get('exp')
+            token_payload = jwt.decode(
+                access_token,
+                settings.SECRET_KEY,
+                algorithms=['HS256']
+            )
             
-            # Проверяем, не истек ли токен
-            current_time = datetime.now().timestamp()
-            
-            # Если токен скоро истечет (осталось менее 5 минут), обновляем его
-            if exp - current_time < 300:  # 5 минут в секундах
-                # Пытаемся обновить токен
-                new_tokens = refresh_access_token(refresh_token)
-                if new_tokens:
-                    access_token = new_tokens['access']
-                    refresh_token = new_tokens['refresh']
-                    
-                    # Декодируем новый access_token
-                    payload = jwt.decode(access_token, settings.SECRET_KEY, algorithms=['HS256'])
-                    user_id = payload.get('user_id')
-                    username = payload.get('username')
-                    user_type = payload.get('user_type')
-                    
-                    # Устанавливаем новые токены в cookies
-                    response = view_func(request, *args, **kwargs)
-                    response.set_cookie('access_token', access_token, httponly=True, samesite='Lax')
-                    response.set_cookie('refresh_token', refresh_token, httponly=True, samesite='Lax')
-                    
-                    # Устанавливаем информацию о пользователе
-                    request.is_authenticated = True
-                    request.user_info = {
-                        'user_id': user_id,
-                        'username': username,
-                        'user_type': user_type
-                    }
-                    
-                    return response
-            
-            # Если токен действителен, устанавливаем информацию о пользователе
+            # Получаем информацию о пользователе из токена
             request.is_authenticated = True
             request.user_info = {
-                'user_id': user_id,
-                'username': username,
-                'user_type': user_type
+                'user_id': token_payload.get('user_id'),
+                'username': token_payload.get('username', ''),
+                'email': token_payload.get('email', ''),
+                'user_type': token_payload.get('user_type', '')
             }
+            
+            logger.debug(f"User info from token: {request.user_info}")
             
             return view_func(request, *args, **kwargs)
             
         except jwt.ExpiredSignatureError:
-            # Если access_token истек, пытаемся обновить его с помощью refresh_token
-            new_tokens = refresh_access_token(refresh_token)
-            
-            if new_tokens:
-                # Если удалось обновить токены
-                access_token = new_tokens['access']
-                refresh_token = new_tokens['refresh']
-                
-                # Декодируем новый access_token
-                try:
-                    payload = jwt.decode(access_token, settings.SECRET_KEY, algorithms=['HS256'])
-                    user_id = payload.get('user_id')
-                    username = payload.get('username')
-                    user_type = payload.get('user_type')
+            # Если access_token истек, пытаемся обновить
+            try:
+                new_tokens = refresh_access_token(refresh_token)
+                if new_tokens:
+                    # Декодируем новый токен для получения информации о пользователе
+                    new_token_payload = jwt.decode(
+                        new_tokens['access'],
+                        settings.SECRET_KEY,
+                        algorithms=['HS256']
+                    )
                     
-                    # Устанавливаем информацию о пользователе
                     request.is_authenticated = True
                     request.user_info = {
-                        'user_id': user_id,
-                        'username': username,
-                        'user_type': user_type
+                        'user_id': new_token_payload.get('user_id'),
+                        'username': new_token_payload.get('username', ''),
+                        'email': new_token_payload.get('email', ''),
+                        'user_type': new_token_payload.get('user_type', '')
                     }
                     
-                    # Выполняем исходную функцию представления
                     response = view_func(request, *args, **kwargs)
-                    
-                    # Устанавливаем новые токены в cookies
-                    response.set_cookie('access_token', access_token, httponly=True, samesite='Lax')
-                    response.set_cookie('refresh_token', refresh_token, httponly=True, samesite='Lax')
-                    
+                    response.set_cookie(
+                        'access_token',
+                        new_tokens['access'],
+                        max_age=3600,
+                        httponly=True,
+                        samesite='Lax'
+                    )
+                    response.set_cookie(
+                        'refresh_token',
+                        new_tokens['refresh'],
+                        max_age=86400,
+                        httponly=True,
+                        samesite='Lax'
+                    )
                     return response
-                    
-                except jwt.InvalidTokenError:
-                    # Если новый токен недействителен
-                    request.is_authenticated = False
-                    request.user_info = None
-            else:
-                # Если не удалось обновить токены
-                request.is_authenticated = False
-                request.user_info = None
-                
-                # Удаляем недействительные токены
-                response = view_func(request, *args, **kwargs)
-                response.delete_cookie('access_token')
-                response.delete_cookie('refresh_token')
-                return response
-                
-        except jwt.InvalidTokenError:
-            # Если токен недействителен
-            request.is_authenticated = False
-            request.user_info = None
+            except Exception as e:
+                logger.error(f"Error refreshing token: {e}")
         
+        # Если что-то пошло не так, считаем пользователя не аутентифицированным
+        request.is_authenticated = False
+        request.user_info = None
         return view_func(request, *args, **kwargs)
     
     return wrapper
 
 def refresh_access_token(refresh_token):
     """
-    Функция для обновления access_token с помощью refresh_token
+    Функция для обновления access_token с помощью refresh_token используя Simple JWT
     """
     try:
-        # URL для обновления токена
-        token_refresh_url = f"{settings.API_BASE_URL}/api/token/refresh/"
-        logger.debug(f"Attempting to refresh token at URL: {token_refresh_url}")
-        
-        # Отправляем запрос на обновление токена
-        response = requests.post(
-            token_refresh_url,
-            json={"refresh": refresh_token},
-            headers={"Content-Type": "application/json"}
-        )
-        
-        # Если запрос успешен
-        logger.debug(f"Token refresh response status: {response.status_code}")
-        if response.status_code == 200:
-            result = response.json()
-            logger.debug("Token refresh successful")
-            return result
-        else:
-            logger.error(f"Token refresh failed: {response.text}")
-        
-        return None
+        from rest_framework_simplejwt.tokens import RefreshToken
+        refresh = RefreshToken(refresh_token)
+        return {
+            'access': str(refresh.access_token),
+            'refresh': str(refresh)
+        }
     except Exception as e:
         logger.error(f"Error refreshing token: {e}")
         return None
+
+def teacher_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not hasattr(request, 'user_info') or not request.user_info or request.user_info.get('user_type') != 'teacher':
+            messages.error(request, 'Доступ запрещен. Эта страница только для учителей.')
+            return redirect('home_page')
+        return view_func(request, *args, **kwargs)
+    return wrapper

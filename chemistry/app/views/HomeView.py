@@ -4,7 +4,6 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from ..decorators import check_auth_tokens
 from ..models import News
 from django.utils.decorators import method_decorator
-from django.db import DatabaseError
 
 class HomePageView(View):
     template_name = 'home.html'
@@ -14,15 +13,10 @@ class HomePageView(View):
         user_info = request.user_info if hasattr(request, 'user_info') else None
         is_authenticated = request.is_authenticated if hasattr(request, 'is_authenticated') else False
         
-        # Получаем только новости (не статьи)
-        try:
-            # Пробуем фильтровать по content_type
-            news_list = News.objects.filter(content_type='news').order_by('-created_at')
-        except DatabaseError as e:
-            # Если поле не существует, получаем все новости
-            # В этом случае мы не можем разделить новости и статьи
-            # Поэтому нужно запустить скрипт add_content_type.py
-            news_list = News.objects.all().order_by('-created_at')
+        # Получаем только новости (фильтруем по категориям новостей)
+        news_list = News.objects.filter(
+            category__in=['announcement', 'update', 'event']
+        ).order_by('-created_at')
         
         # Пагинация
         page = request.GET.get('page', 1)

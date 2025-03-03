@@ -79,11 +79,10 @@
     <div class="articles-grid">
         {% if articles_list %}
             {% for article in articles_list %}
-                <article class="article-card" data-category="{{ article.category }}">
+                <article class="article-card">
                     {% if article.image %}
                         <div class="article-image">
                             <img src="{{ article.image.url }}" alt="{{ article.title }}" loading="lazy">
-                            <div class="article-category">{{ article.get_category_display }}</div>
                         </div>
                     {% endif %}
                     <div class="article-content">

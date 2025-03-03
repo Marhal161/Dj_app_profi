@@ -52,7 +52,16 @@ class LoginView(APIView):
             logger.debug(f"Результат аутентификации: {user is not None}")
             
             if user is not None:
+                # Создаем токен
                 refresh = RefreshToken.for_user(user)
+                
+                # Добавляем пользовательские данные в токен
+                refresh['username'] = user.username
+                refresh['email'] = user.email
+                refresh['user_type'] = user.user_type
+                refresh['user_id'] = user.id
+                
+                # Получаем access token
                 access_token = str(refresh.access_token)
                 
                 response_data = {
@@ -65,17 +74,28 @@ class LoginView(APIView):
                         'first_name': user.first_name,
                         'last_name': user.last_name,
                         'user_type': user.user_type,
-                    },
-                    'access_token': access_token,
-                    'refresh_token': str(refresh),
+                    }
                 }
                 
                 response = JsonResponse(response_data, status=status.HTTP_200_OK)
                 
-                # Устанавливаем куки без secure=True для локальной разработки
-                response.set_cookie(key='access_token', value=access_token, httponly=True, samesite='Lax', max_age=3600)
-                response.set_cookie(key='refresh_token', value=str(refresh), httponly=True, samesite='Lax', max_age=604800)
+                # Устанавливаем куки
+                response.set_cookie(
+                    key='access_token',
+                    value=access_token,
+                    httponly=True,
+                    samesite='Lax',
+                    max_age=3600  # 1 час
+                )
+                response.set_cookie(
+                    key='refresh_token',
+                    value=str(refresh),
+                    httponly=True,
+                    samesite='Lax',
+                    max_age=86400  # 24 часа
+                )
                 
+                logger.debug(f"Токены установлены для пользователя: {user.username}")
                 return response
             else:
                 logger.warning(f"Неверный пароль для пользователя: {username}")

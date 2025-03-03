@@ -1,8 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import View
 from ..models import News
-import jwt
-from django.conf import settings
 from rest_framework import viewsets, permissions, status, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -10,17 +8,19 @@ from rest_framework.pagination import PageNumberPagination
 from ..serializers.NewsSerializer import NewsSerializer
 from ..decorators import check_auth_tokens
 from django.utils.decorators import method_decorator
-from django.db import DatabaseError
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 # Пагинатор для API
 class NewsAPIPagination(PageNumberPagination):
-    page_size = 10
+    page_size = 12
     page_size_query_param = 'page_size'
     max_page_size = 100
 
 # API ViewSet для CRUD операций с новостями
 class NewsViewSet(viewsets.ModelViewSet):
+    queryset = News.objects.all().order_by('-created_at')
     serializer_class = NewsSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = NewsAPIPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'content']
@@ -46,12 +46,7 @@ class NewsViewSet(viewsets.ModelViewSet):
         - Для обычных пользователей показываем только опубликованные новости
         - Для администраторов показываем все новости
         """
-        try:
-            # Пытаемся фильтровать по типу контента
-            queryset = News.objects.filter(content_type='news').order_by('-created_at')
-        except DatabaseError:
-            # Если поле не существует, получаем все новости
-            queryset = News.objects.all().order_by('-created_at')
+        queryset = News.objects.all().order_by('-created_at')
         
         # Фильтрация по категории
         category = self.request.query_params.get('category', None)
@@ -59,11 +54,8 @@ class NewsViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(category=category)
         
         # Фильтрация по опубликованным/неопубликованным
-        try:
-            if not self.request.user.is_staff and hasattr(News, 'is_published'):
-                queryset = queryset.filter(is_published=True)
-        except:
-            pass
+        if not self.request.user.is_staff and hasattr(News, 'is_published'):
+            queryset = queryset.filter(is_published=True)
         
         return queryset
     
@@ -74,14 +66,7 @@ class NewsViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def published(self, request):
         """Эндпоинт для получения только опубликованных новостей"""
-        try:
-            if hasattr(News, 'is_published'):
-                queryset = self.get_queryset().filter(is_published=True)
-            else:
-                queryset = self.get_queryset()
-        except DatabaseError:
-            queryset = self.get_queryset()
-            
+        queryset = self.get_queryset().filter(is_published=True)
         page = self.paginate_queryset(queryset)
         
         if page is not None:
@@ -114,10 +99,7 @@ class NewsViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def articles(self, request):
         """Эндпоинт для получения только статей"""
-        try:
-            queryset = self.get_queryset().filter(content_type='article')
-        except DatabaseError:
-            queryset = self.get_queryset()
+        queryset = self.get_queryset().filter(content_type='article')
         page = self.paginate_queryset(queryset)
         
         if page is not None:
@@ -130,10 +112,7 @@ class NewsViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def news(self, request):
         """Эндпоинт для получения только новостей"""
-        try:
-            queryset = self.get_queryset().filter(content_type='news')
-        except DatabaseError:
-            queryset = self.get_queryset()
+        queryset = self.get_queryset().filter(content_type='news')
         page = self.paginate_queryset(queryset)
         
         if page is not None:
@@ -157,11 +136,10 @@ class NewsDetailView(View):
         is_authenticated = request.is_authenticated if hasattr(request, 'is_authenticated') else False
         
         # Получаем новость по ID
-        news = get_object_or_404(News, pk=pk, content_type='news')
+        news = get_object_or_404(News, pk=pk)
         
-        # Получаем связанные новости
+        # Получаем связанные новости той же категории
         related_news = News.objects.filter(
-            content_type='news',
             category=news.category
         ).exclude(pk=pk).order_by('-created_at')[:3]
         

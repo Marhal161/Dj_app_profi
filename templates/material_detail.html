@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ material.title }} | Химия{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/materials.css">
+{% endblock %}
+
+{% block content %}
+<div class="material-detail-container">
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <a href="{% url 'materials' %}" class="btn btn-secondary back-button">
+        <i class="fas fa-arrow-left"></i> Назад к материалам
+    </a>
+    
+    <div class="material-header">
+        <h1>{{ material.title }}</h1>
+        <div class="material-meta">
+            <p><i class="far fa-calendar-alt"></i> {{ material.created_at|date:"d.m.Y" }}</p>
+        </div>
+    </div>
+
+    {% if material.image %}
+    <div class="material-image">
+        <img src="{{ material.image.url }}" alt="{{ material.title }}" class="img-fluid">
+    </div>
+    {% endif %}
+
+    <div class="material-content">
+        {{ material.content|safe|linebreaks }}
+    </div>
+
+    {% if user_info.is_superuser %}
+    <div class="material-actions">
+        <form method="POST" action="{% url 'delete_material' material.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="delete_material" value="true">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Вы уверены, что хотите удалить этот материал?')">
+                <i class="fas fa-trash"></i> Удалить материал
+            </button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Скрываем сообщения через 3 секунды
+        const messageDivs = document.querySelectorAll('.messages .alert');
+        messageDivs.forEach(function(message) {
+            setTimeout(function() {
+                message.style.opacity = '0';
+                setTimeout(function() {
+                    message.remove();
+                }, 300); // Удаляем элемент через 300 мс после анимации
+            }, 3000); // 3000 мс = 3 секунды
+        });
+    });
+</script>
+{% endblock %} 

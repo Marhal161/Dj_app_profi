@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} | Химия{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/materials.css">
+{% endblock %}
+
+{% block content %}
+<div class="materials-container">
+    <h1>Материалы</h1>
+    
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% if is_authenticated %}
+    <!-- Убрана кнопка "Добавить материал", т.к. материалы добавляются только через админ-панель -->
+    
+    <div class="materials-list">
+        {% if materials %}
+            <div class="materials-grid">
+                {% for material in materials %}
+                    <div class="material-card">
+                        <div class="material-image-container">
+                            {% if material.image %}
+                                <img src="{{ material.image.url }}" alt="{{ material.title }}">
+                            {% else %}
+                                <div class="material-no-image">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="material-content">
+                            <h3 class="material-title">{{ material.title }}</h3>
+                            <div class="material-date">
+                                <i class="far fa-calendar-alt"></i> {{ material.created_at|date:"d.m.Y" }}
+                            </div>
+                            <div class="material-actions">
+                                <a href="{% url 'material_detail' material.id %}" class="btn btn-primary btn-sm">Просмотреть</a>
+                                {% if user_info.is_superuser %}
+                                <form method="POST" action="{% url 'delete_material' material.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="delete_material" value="true">
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Вы уверены, что хотите удалить этот материал?')">Удалить</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-book empty-icon"></i>
+                <p>Нет доступных материалов</p>
+            </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="not-authenticated">
+        <p>Для просмотра материалов необходимо <a href="{% url 'login_page' %}">войти в систему</a>.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Скрываем сообщения через 3 секунды
+        const messageDivs = document.querySelectorAll('.messages .alert');
+        messageDivs.forEach(function(message) {
+            setTimeout(function() {
+                message.style.opacity = '0';
+                setTimeout(function() {
+                    message.remove();
+                }, 300); // Удаляем элемент через 300 мс после анимации
+            }, 3000); // 3000 мс = 3 секунды
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/materials.js"></script>
+{% endblock %} 

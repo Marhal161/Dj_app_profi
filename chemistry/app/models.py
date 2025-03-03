@@ -37,20 +37,12 @@ class News(models.Model):
         ('announcement', 'Объявление'),
         ('update', 'Обновление'),
         ('event', 'Событие'),
-        ('article', 'Статья'),
-    )
-    
-    CONTENT_TYPE_CHOICES = (
-        ('news', 'Новость'),
-        ('article', 'Статья'),
     )
     
     title = models.CharField(max_length=200, verbose_name='Заголовок')
     content = models.TextField(verbose_name='Содержание')
     image = models.ImageField(upload_to='news_images/', blank=True, null=True, verbose_name='Изображение')
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='announcement', verbose_name='Категория')
-    content_type = models.CharField(max_length=10, choices=CONTENT_TYPE_CHOICES, default='news', verbose_name='Тип контента')
-    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Автор')
     created_at = models.DateTimeField(default=timezone.now, verbose_name='Дата создания')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
     is_published = models.BooleanField(default=True, verbose_name='Опубликовано')
@@ -58,31 +50,32 @@ class News(models.Model):
     def __str__(self):
         return self.title
     
-    def get_category_display(self):
-        return dict(self.CATEGORY_CHOICES).get(self.category, '')
-    
     class Meta:
         verbose_name = 'новость'
         verbose_name_plural = 'новости'
         ordering = ['-created_at']
 
-class Article(News):
+class Article(models.Model):
+    title = models.CharField(max_length=200, verbose_name='Заголовок')
+    content = models.TextField(verbose_name='Содержание')
+    image = models.ImageField(upload_to='article_images/', blank=True, null=True, verbose_name='Изображение')
+    created_at = models.DateTimeField(default=timezone.now, verbose_name='Дата создания')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
+    is_published = models.BooleanField(default=True, verbose_name='Опубликовано')
+    
+    def __str__(self):
+        return self.title
+    
     class Meta:
-        proxy = True
         verbose_name = 'статья'
         verbose_name_plural = 'статьи'
-
-    def save(self, *args, **kwargs):
-        self.content_type = 'article'
-        self.category = 'article'
-        super().save(*args, **kwargs)
+        ordering = ['-created_at']
 
 class Material(models.Model):
-    title = models.CharField(max_length=200)
-    content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='materials')
-    category = models.ForeignKey('Category', on_delete=models.SET_NULL, null=True, blank=True)
+    title = models.CharField(max_length=200, verbose_name='Заголовок')
+    content = models.TextField(verbose_name='Содержание')
+    image = models.ImageField(upload_to='material_images/', blank=True, null=True, verbose_name='Изображение')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     
     def __str__(self):
         return self.title
@@ -118,10 +111,9 @@ class Category(models.Model):
         verbose_name_plural = _('категории')
 
 class Test(models.Model):
-    title = models.CharField(max_length=200)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tests')
+    title = models.CharField(max_length=200, verbose_name='Название')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name='Категория')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     
     def __str__(self):
         return self.title
@@ -129,7 +121,7 @@ class Test(models.Model):
     class Meta:
         verbose_name = _('тест')
         verbose_name_plural = _('тесты')
-    
+
 class TestQuestion(models.Model):
     test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='questions')
     question = models.TextField()
@@ -142,3 +134,62 @@ class TestQuestion(models.Model):
     class Meta:
         verbose_name = _('вопрос теста')
         verbose_name_plural = _('вопросы теста')
+
+class Class(models.Model):
+    name = models.CharField(max_length=50, verbose_name=_('название класса'))
+    teacher = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        limit_choices_to={'user_type': 'teacher'},
+        related_name='teaching_classes',
+        verbose_name=_('учитель')
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('дата создания'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('дата обновления'))
+    
+    def __str__(self):
+        return f"{self.name} - {self.teacher.username}"
+    
+    class Meta:
+        verbose_name = _('класс')
+        verbose_name_plural = _('классы')
+        unique_together = ['name', 'teacher']
+
+class ClassStudent(models.Model):
+    class_group = models.ForeignKey(
+        Class, 
+        on_delete=models.CASCADE, 
+        related_name='students',
+        verbose_name=_('класс')
+    )
+    student = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE,
+        limit_choices_to={'user_type': 'student'},
+        related_name='enrolled_classes',
+        verbose_name=_('ученик')
+    )
+    joined_at = models.DateTimeField(auto_now_add=True, verbose_name=_('дата присоединения'))
+    
+    def __str__(self):
+        return f"{self.student.username} в классе {self.class_group.name}"
+    
+    class Meta:
+        verbose_name = _('ученик класса')
+        verbose_name_plural = _('ученики класса')
+        unique_together = ['class_group', 'student']
+        ordering = ['joined_at']
+
+class ClassInvitation(models.Model):
+    class_group = models.ForeignKey('Class', on_delete=models.CASCADE, related_name='invitations')
+    student = models.ForeignKey('User', on_delete=models.CASCADE, related_name='class_invitations')
+    status = models.CharField(max_length=20, choices=[
+        ('pending', 'В ожидании'),
+        ('accepted', 'Принято'),
+        ('rejected', 'Отклонено')
+    ], default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('class_group', 'student')
+        ordering = ['-created_at']
