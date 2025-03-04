@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} | Химия{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/teacher_dashboard.css">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-sidebar">
+        <h2>Панель учителя</h2>
+        <ul class="nav-menu">
+            <li class="{% if active_page == 'dashboard' %}active{% endif %}">
+                <a href="{% url 'teacher_dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i> Обзор
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'test_review' %}">
+                    <i class="fas fa-tasks"></i> Проверка заданий
+                    {% if tests_awaiting_review > 0 %}
+                        <span class="badge">{{ tests_awaiting_review }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'class' %}">
+                    <i class="fas fa-users"></i> Мой класс
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="fas fa-chart-bar"></i> Отчеты
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="dashboard-content">
+        <div class="dashboard-header">
+            <h1>Мой класс</h1>
+            <h2>{{ teacher_class.name }}</h2>
+        </div>
+        
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="stats-cards">
+            <div class="card">
+                <div class="card-content">
+                    <h3>Всего учеников</h3>
+                    <p class="stat-number">{{ students.count }}</p>
+                </div>
+                <div class="card-icon">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-content">
+                    <h3>Требуют проверки</h3>
+                    <p class="stat-number">{{ tests_awaiting_review }}</p>
+                </div>
+                <div class="card-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-content">
+                    <h3>Средний балл</h3>
+                    <p class="stat-number">{{ students.avg_score|default:"0"|floatformat:1 }}</p>
+                </div>
+                <div class="card-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+        </div>
+        
+        {% if students %}
+        <div class="students-table-wrapper">
+            <div class="table-header">
+                <h3>Ученики класса</h3>
+                <div class="table-actions">
+                    <div class="search-box">
+                        <input type="text" id="studentSearch" placeholder="Поиск ученика...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table class="students-table">
+                    <thead>
+                        <tr>
+                            <th>Имя ученика</th>
+                            <th>Пройдено тестов</th>
+                            <th>Средний балл</th>
+                            <th>На проверке</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                            <tr class="student-row" data-student-id="{{ student.id }}">
+                                <td class="student-name">{{ student.username }}</td>
+                                <td>{{ student.completed_tests }} / {{ student.total_tests }}</td>
+                                <td>{{ student.avg_score|default:"0"|floatformat:1 }}</td>
+                                <td>
+                                    <span class="awaiting-badge {% if student.awaiting_count > 0 %}has-awaiting{% endif %}">
+                                        {{ student.awaiting_count }}
+                                    </span>
+                                </td>
+                                <td class="row-actions">
+                                    <button class="toggle-student-details" data-student-id="{{ student.id }}">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="student-details-row" id="details-{{ student.id }}">
+                                <td colspan="5">
+                                    <div class="student-details">
+                                        <div class="details-columns">
+                                            <div class="details-column">
+                                                <h4>Статистика выполнения</h4>
+                                                <div class="progress-stats">
+                                                    <div class="stat-item">
+                                                        <span class="stat-label">Выполнено:</span>
+                                                        <span class="stat-value">{{ student.completed_tests }}</span>
+                                                    </div>
+                                                    <div class="stat-item">
+                                                        <span class="stat-label">На проверке:</span>
+                                                        <span class="stat-value">{{ student.awaiting_count }}</span>
+                                                    </div>
+                                                    <div class="stat-item">
+                                                        <span class="stat-label">Всего тестов:</span>
+                                                        <span class="stat-value">{{ student.total_tests }}</span>
+                                                    </div>
+                                                    <div class="stat-item">
+                                                        <span class="stat-label">Средний балл:</span>
+                                                        <span class="stat-value">{{ student.avg_score|default:"0"|floatformat:1 }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="details-column">
+                                                <h4>Прогресс обучения</h4>
+                                                <div class="chart-container">
+                                                    <canvas id="chart-{{ student.id }}" width="200" height="200"></canvas>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="details-actions">
+                                            <a href="{% url 'student_detail' student.id %}" class="btn btn-primary">
+                                                <i class="fas fa-chart-line"></i> Подробная статистика
+                                            </a>
+                                            {% if student.awaiting_count > 0 %}
+                                                <a href="{% url 'student_tests' student.id %}" class="btn btn-accent">
+                                                    <i class="fas fa-check"></i> Проверить задания
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <h3>Нет учеников</h3>
+                <p>У вас пока нет учеников. Добавьте их в свой класс, чтобы они отображались здесь.</p>
+                <a href="{% url 'class' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Добавить учеников
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Инициализируем круговые диаграммы для каждого ученика
+        {% for student in students %}
+            const ctx{{ student.id }} = document.getElementById('chart-{{ student.id }}');
+            
+            // Определяем данные для диаграммы
+            const completedTests = {{ student.completed_tests|default:0 }};
+            const awaitingTests = {{ student.awaiting_count|default:0 }};
+            const otherTests = Math.max(0, {{ student.total_tests|default:0 }} - completedTests - awaitingTests);
+            
+            // Создаем диаграмму
+            new Chart(ctx{{ student.id }}, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Завершено', 'На проверке', 'Не начато'],
+                    datasets: [{
+                        data: [completedTests, awaitingTests, otherTests],
+                        backgroundColor: ['#4caf50', '#ff9800', '#e0e0e0'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        {% endfor %}
+        
+        // Обработчик клика по строке ученика
+        const toggleButtons = document.querySelectorAll('.toggle-student-details');
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const studentId = this.getAttribute('data-student-id');
+                const detailsRow = document.getElementById(`details-${studentId}`);
+                
+                // Переключаем класс для строки и значок
+                this.classList.toggle('active');
+                if (this.classList.contains('active')) {
+                    this.innerHTML = '<i class="fas fa-chevron-up"></i>';
+                    detailsRow.classList.add('show');
+                } else {
+                    this.innerHTML = '<i class="fas fa-chevron-down"></i>';
+                    detailsRow.classList.remove('show');
+                }
+            });
+        });
+        
+        // Поиск по таблице учеников
+        const searchInput = document.getElementById('studentSearch');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const searchValue = this.value.toLowerCase();
+                const rows = document.querySelectorAll('.student-row');
+                
+                rows.forEach(row => {
+                    const studentName = row.querySelector('.student-name').textContent.toLowerCase();
+                    const detailsId = row.getAttribute('data-student-id');
+                    const detailsRow = document.getElementById(`details-${detailsId}`);
+                    
+                    if (studentName.includes(searchValue)) {
+                        row.style.display = '';
+                        if (detailsRow && detailsRow.classList.contains('show')) {
+                            detailsRow.style.display = '';
+                        }
+                    } else {
+                        row.style.display = 'none';
+                        if (detailsRow) {
+                            detailsRow.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

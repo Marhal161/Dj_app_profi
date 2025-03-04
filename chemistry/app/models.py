@@ -166,10 +166,11 @@ class TestAttempt(models.Model):
         ('completed', 'Завершен'),
         ('awaiting_review', 'Ожидает проверки'),
         ('reviewed', 'Проверен'),
+        ('archived', 'В архиве'),
     )
     
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='test_attempts')
     test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='attempts')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='test_attempts')
     started_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='in_progress')
@@ -183,9 +184,6 @@ class TestAttempt(models.Model):
         if self.max_score == 0:
             return 0
         return int((self.score / self.max_score) * 100)
-    
-    class Meta:
-        unique_together = ['user', 'test']  # Один пользователь может пройти тест только один раз
 
 class TestAnswer(models.Model):
     attempt = models.ForeignKey(TestAttempt, on_delete=models.CASCADE, related_name='answers')

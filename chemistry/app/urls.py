@@ -13,8 +13,9 @@ from .views.ClassView import ClassView
 from .views.MaterialView import MaterialView
 from .views.TestView import (
     TestListView, TestDetailView, TestTakeView, 
-    TestResultView, TestReviewView, TestReviewDetailView
+    TestResultView, TestReviewView, TestReviewDetailView, TestStartView
 )
+from .views.TeacherView import TeacherDashboardView, StudentDetailView, StudentTestsView
 
 # Создаем роутер для API
 router = DefaultRouter()
@@ -46,11 +47,17 @@ urlpatterns = [
     path('materials/delete/<int:material_id>/', MaterialView.as_view(), name='delete_material'),
     path('tests/', TestListView.as_view(), name='test_list'),
     path('tests/<int:test_id>/', TestDetailView.as_view(), name='test_detail'),
+    path('tests/<int:test_id>/start/', TestStartView.as_view(), name='test_start'),
     path('tests/<int:test_id>/take/<int:attempt_id>/', TestTakeView.as_view(), name='test_take'),
     path('tests/<int:test_id>/result/<int:attempt_id>/', TestResultView.as_view(), name='test_result'),
     path('tests/review/', TestReviewView.as_view(), name='test_review'),
     path('tests/review/class/<int:class_id>/', TestReviewView.as_view(), name='test_review_class'),
     path('tests/review/<int:attempt_id>/', TestReviewDetailView.as_view(), name='test_review_detail'),
+    
+    # Панель учителя
+    path('dashboard/', TeacherDashboardView.as_view(), name='teacher_dashboard'),
+    path('dashboard/student/<int:student_id>/', StudentDetailView.as_view(), name='student_detail'),
+    path('dashboard/student/<int:student_id>/tests/', StudentTestsView.as_view(), name='student_tests'),
 ]
 
 if settings.DEBUG:

@@ -1,0 +1,65 @@
+/* Стили для печати */
+@media print {
+    /* Скрыть все, что не нужно печатать */
+    body * {
+        visibility: hidden;
+    }
+    
+    /* Показать только нужный контейнер */
+    .print-container,
+    .print-container * {
+        visibility: visible;
+    }
+    
+    /* Позиционирование контейнера для печати */
+    .print-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    
+    /* Убираем фоновые цвета */
+    .result-header {
+        background-color: white !important;
+        color: black !important;
+        padding: 10px !important;
+        border-bottom: 2px solid #333 !important;
+    }
+    
+    /* Настраиваем цвета текста */
+    .answer-card, .answer-item,
+    .result-section h3, .answer-item h4,
+    .user-answer, .correct-answer, 
+    .points-info, .teacher-feedback {
+        color: black !important;
+    }
+    
+    /* Убираем тени и добавляем границы */
+    .answer-card, .answer-item {
+        box-shadow: none !important;
+        border: 1px solid #333 !important;
+        page-break-inside: avoid !important;
+        margin-bottom: 15px !important;
+    }
+    
+    /* Увеличиваем контрастность текста */
+    .answer-text, .answer-text-long,
+    .answer-label, .feedback-label,
+    .question-text {
+        color: #000 !important;
+    }
+    
+    /* Улучшаем отображение результатов */
+    .score-box, .status-box {
+        border: 1px solid #333 !important;
+        background-color: white !important;
+        color: black !important;
+    }
+    
+    /* Устанавливаем размер страницы */
+    @page {
+        size: A4;
+        margin: 1cm;
+    }
+} 

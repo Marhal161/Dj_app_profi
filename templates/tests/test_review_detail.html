@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load dict_filters %}
+
+{% block title %}Проверка работы | Химия{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/tests.css">
+<link rel="stylesheet" href="/static/css/teacher_dashboard.css">
+{% endblock %}
+
+{% block content %}
+<div class="test-review-container">
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <a href="{% url 'test_review' %}" class="btn btn-secondary back-button">
+        <i class="fas fa-arrow-left"></i> Назад к списку
+    </a>
+    
+    <div class="review-header">
+        <h1>Проверка работы: {{ attempt.test.title }}</h1>
+        <div class="student-info">
+            <span class="student-label">Ученик:</span> 
+            <span class="student-name">{{ attempt.user.username }}</span>
+        </div>
+    </div>
+    
+    <!-- Добавляем блок статистики -->
+    <div class="student-stats-container">
+        <div class="stats-card">
+            <h3>Статистика ученика</h3>
+            <div class="stats-grid">
+                <div class="chart-container">
+                    <canvas id="studentStatsChart"></canvas>
+                </div>
+                <div class="stats-info">
+                    <div class="stat-item">
+                        <span class="stat-label">Всего ответов:</span>
+                        <span class="stat-value">{{ total_answers }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Правильных ответов:</span>
+                        <span class="stat-value correct">{{ correct_answers }} ({{ correct_percentage }}%)</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Неправильных ответов:</span>
+                        <span class="stat-value incorrect">{{ incorrect_answers }} ({{ 100|subtract:correct_percentage }}%)</span>
+                    </div>
+                    <div class="stat-item current-test">
+                        <span class="stat-label">В текущем тесте:</span>
+                        <span class="stat-value">{{ current_test_correct }} из {{ current_test_total }} ({{ current_test_percentage }}%)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" action="{% url 'test_review_detail' attempt.id %}" id="reviewForm">
+        {% csrf_token %}
+        
+        <div class="result-section">
+            <h3>Часть A: Вопросы с кратким ответом</h3>
+            {% if answers_part_a %}
+                <div class="answers-grid">
+                    {% for answer in answers_part_a %}
+                        <div class="answer-card {% if answer.is_correct %}correct{% else %}incorrect{% endif %}">
+                            <div class="question-number">Вопрос {{ forloop.counter }}</div>
+                            <div class="question-text">{{ answer.question.text|safe }}</div>
+                            
+                            <div class="user-answer">
+                                <span class="answer-label">Ответ ученика:</span>
+                                <span class="answer-text">{{ answer.answer_text }}</span>
+                            </div>
+                            
+                            <div class="correct-answer">
+                                <span class="answer-label">Правильный ответ:</span>
+                                <span class="answer-text">{{ answer.question.answer }}</span>
+                            </div>
+                            
+                            <div class="points-info">
+                                <span class="points-earned">{{ answer.points_awarded }}</span> / <span class="points-total">{{ answer.question.points }}</span> баллов
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="no-answers">Нет ответов на вопросы части A</p>
+            {% endif %}
+        </div>
+        
+        <div class="result-section">
+            <h3>Часть B: Вопросы с развернутым ответом</h3>
+            {% if answers_part_b %}
+                <div class="answers-list">
+                    {% for answer in answers_part_b %}
+                        <div class="answer-item">
+                            <h4>Вопрос {{ forloop.counter }}</h4>
+                            <div class="question-text">{{ answer.question.text|safe }}</div>
+                            
+                            {% if answer.question.image %}
+                                <div class="question-image">
+                                    <img src="{{ answer.question.image.url }}" alt="Иллюстрация к вопросу">
+                                </div>
+                            {% endif %}
+                            
+                            <div class="user-answer">
+                                <div class="answer-label">Ответ ученика:</div>
+                                <div class="answer-text-long">{{ answer.answer_text|linebreaks }}</div>
+                            </div>
+                            
+                            <div class="review-section">
+                                <div class="form-group">
+                                    <label for="points_{{ answer.id }}">Баллы:</label>
+                                    <input type="number" 
+                                           id="points_{{ answer.id }}" 
+                                           name="points_{{ answer.id }}" 
+                                           min="0" 
+                                           max="{{ answer.question.points }}" 
+                                           class="points-input" 
+                                           value="{{ answer.points_awarded|default:'0' }}" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="comment_{{ answer.id }}">Комментарий:</label>
+                                    <textarea id="comment_{{ answer.id }}" 
+                                              name="comment_{{ answer.id }}" 
+                                              rows="4" 
+                                              class="comment-input">{{ answer.teacher_comment|default:'' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="no-answers">Нет ответов на вопросы части B</p>
+            {% endif %}
+        </div>
+        
+        <div class="review-actions">
+            <button type="submit" name="save_review" class="btn btn-primary">
+                <i class="fas fa-save"></i> Сохранить оценку
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Подключаем Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Скрываем сообщения через 3 секунды
+        const messageDivs = document.querySelectorAll('.messages .alert');
+        messageDivs.forEach(function(message) {
+            setTimeout(function() {
+                message.style.opacity = '0';
+                setTimeout(function() {
+                    message.remove();
+                }, 300);
+            }, 3000);
+        });
+        
+        // Проверка на валидность ввода баллов
+        const pointsInputs = document.querySelectorAll('.points-input');
+        pointsInputs.forEach(function(input) {
+            input.addEventListener('change', function() {
+                const max = parseInt(this.getAttribute('max'));
+                const value = parseInt(this.value);
+                
+                if (value < 0) {
+                    this.value = 0;
+                } else if (value > max) {
+                    this.value = max;
+                }
+            });
+        });
+        
+        // Создаем круговую диаграмму
+        const ctx = document.getElementById('studentStatsChart').getContext('2d');
+        const studentStatsChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Правильно', 'Неправильно'],
+                datasets: [{
+                    data: [{{ correct_answers }}, {{ incorrect_answers }}],
+                    backgroundColor: [
+                        'rgba(75, 192, 92, 0.8)',
+                        'rgba(255, 99, 132, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 92, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Статистика ответов ученика'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %} 

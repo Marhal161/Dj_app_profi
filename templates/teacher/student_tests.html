@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} | Химия{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/teacher_dashboard.css">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-sidebar">
+        <h2>Панель учителя</h2>
+        <ul class="nav-menu">
+            <li class="{% if active_page == 'dashboard' %}active{% endif %}">
+                <a href="{% url 'teacher_dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i> Обзор
+                </a>
+            </li>
+            <li class="{% if active_page == 'students' %}active{% endif %}">
+                <a href="{% url 'teacher_dashboard' %}">
+                    <i class="fas fa-user-graduate"></i> Ученики
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'test_review' %}">
+                    <i class="fas fa-tasks"></i> Проверка заданий
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'class' %}">
+                    <i class="fas fa-users"></i> Мой класс
+                </a>
+            </li>
+            <li>
+                <a href="#">
+                    <i class="fas fa-chart-bar"></i> Отчеты
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="dashboard-content">
+        <div class="dashboard-header">
+            <a href="{% url 'student_detail' student.id %}" class="back-link">
+                <i class="fas fa-arrow-left"></i> Назад к профилю ученика
+            </a>
+            <h1>Тесты ученика: {{ student.username }}</h1>
+        </div>
+        
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% if test_attempts %}
+            <div class="test-filter-container">
+                <div class="filter-group">
+                    <label for="statusFilter">Статус:</label>
+                    <select id="statusFilter" class="filter-select">
+                        <option value="all">Все</option>
+                        <option value="awaiting_review">Ожидают проверки</option>
+                        <option value="completed">Завершены</option>
+                        <option value="reviewed">Проверены</option>
+                        <option value="in_progress">В процессе</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table class="data-table" id="testsTable">
+                    <thead>
+                        <tr>
+                            <th>Название теста</th>
+                            <th>Дата</th>
+                            <th>Статус</th>
+                            <th>Результат</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attempt in test_attempts %}
+                            <tr class="test-row" data-status="{{ attempt.status }}">
+                                <td>{{ attempt.test.title }}</td>
+                                <td>{{ attempt.started_at|date:"d.m.Y H:i" }}</td>
+                                <td>
+                                    {% if attempt.status == 'in_progress' %}
+                                        <span class="status in-progress">В процессе</span>
+                                    {% elif attempt.status == 'completed' %}
+                                        <span class="status completed">Завершен</span>
+                                    {% elif attempt.status == 'awaiting_review' %}
+                                        <span class="status awaiting">Ожидает проверки</span>
+                                    {% elif attempt.status == 'reviewed' %}
+                                        <span class="status reviewed">Проверен</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if attempt.status in 'completed,reviewed' %}
+                                        <div class="score-bar-container">
+                                            <div class="score-bar" style="width: {{ attempt.get_percent_score }}%"></div>
+                                            <span class="score-text">{{ attempt.score }} / {{ attempt.max_score }} ({{ attempt.get_percent_score }}%)</span>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="actions">
+                                    {% if attempt.status == 'awaiting_review' %}
+                                        <a href="{% url 'test_review_detail' attempt.id %}" class="btn btn-sm btn-accent">
+                                            <i class="fas fa-check"></i> Проверить
+                                        </a>
+                                    {% elif attempt.status in 'completed,reviewed' %}
+                                        <a href="{% url 'test_result' attempt.test.id attempt.id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i> Просмотреть
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const statusFilter = document.getElementById('statusFilter');
+                    const testsTable = document.getElementById('testsTable');
+                    const rows = testsTable.querySelectorAll('tbody tr');
+                    
+                    statusFilter.addEventListener('change', function() {
+                        const selectedValue = this.value;
+                        
+                        rows.forEach(row => {
+                            const status = row.getAttribute('data-status');
+                            
+                            if (selectedValue === 'all' || status === selectedValue) {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        });
+                    });
+                });
+            </script>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-vial"></i>
+                </div>
+                <h3>Нет пройденных тестов</h3>
+                <p>Этот ученик еще не прошел ни одного теста.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} | Химия{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/tests.css">
+{% endblock %}
+
+{% block content %}
+<div class="test-container">
+    <h1 class="test-title">{{ test.title }}</h1>
+    
+    <div class="test-description">
+        {{ test.description|safe }}
+    </div>
+    
+    <div class="test-meta">
+        <div class="test-info">
+            <div class="info-item">
+                <span class="info-label">Количество вопросов:</span>
+                <span class="info-value">{{ test.question_count }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Балл за тест:</span> 
+                <span class="info-value">{{ test.total_points }}</span>
+            </div>
+            {% if test.time_limit %}
+            <div class="info-item">
+                <span class="info-label">Ограничение по времени:</span>
+                <span class="info-value">{{ test.time_limit }} минут</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="test-instructions">
+        <h3>Инструкции</h3>
+        <ul>
+            <li>Внимательно прочтите каждый вопрос перед тем, как ответить.</li>
+            <li>В части A требуются краткие ответы.</li>
+            <li>В части B требуются развернутые ответы.</li>
+            <li>Вы можете сохранять ответы и возвращаться к тесту позже.</li>
+            <li>После отправки теста изменить ответы будет невозможно.</li>
+            {% if test.time_limit %}
+            <li>У вас есть {{ test.time_limit }} минут на выполнение теста.</li>
+            {% endif %}
+        </ul>
+    </div>
+    
+    <form method="POST" action="{% url 'test_start' test_id=test.id %}">
+        {% csrf_token %}
+        <div class="test-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-play"></i> Начать тест
+            </button>
+            <a href="{% url 'test_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Вернуться к списку
+            </a>
+            <div class="status-note">
+                Примечание: После начала теста, вы должны завершить его в рамках отведенного времени.
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %} 

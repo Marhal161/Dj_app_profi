@@ -268,105 +268,121 @@
 }
 
 /* Стили для страницы результатов теста */
-.result-summary {
-    background-color: #f8f9fa;
+.test-result-container {
+    background-color: #f9f9f9;
     padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    color: #333;
+}
+
+.result-header {
+    background-color: #007bff;
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.score-summary {
     display: flex;
-    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    margin-top: 10px;
 }
 
-.result-score {
-    font-size: 24px;
-    font-weight: bold;
+.score-box {
+    background-color: #ffffff;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    margin-right: 10px;
     color: #333;
 }
 
-.result-progress {
-    width: 100%;
-    height: 10px;
-    background-color: #e9ecef;
+.status-box {
+    background-color: #ffffff;
+    padding: 10px;
     border-radius: 5px;
-    margin: 15px 0;
-    overflow: hidden;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    color: #333;
 }
 
-.result-progress-bar {
-    height: 100%;
-    background-color: #28a745;
+.result-content {
+    margin-top: 20px;
 }
 
-.result-status {
-    background-color: #17a2b8;
-    color: white;
-    padding: 5px 15px;
-    border-radius: 20px;
-    font-weight: 600;
-}
-
-.answers-list {
-    margin-top: 30px;
-}
-
-.answer-item {
-    background-color: #fff;
-    border-radius: 8px;
-    padding: 20px;
+.result-section {
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 5px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-
-.answer-item.correct {
-    border-left: 5px solid #28a745;
-}
-
-.answer-item.incorrect {
-    border-left: 5px solid #dc3545;
-}
-
-.answer-item.awaiting-review {
-    border-left: 5px solid #ffc107;
-}
-
-.answer-question {
-    font-weight: 600;
-    margin-bottom: 15px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
     color: #333;
 }
 
-.answer-user {
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-radius: 5px;
-    margin-bottom: 10px;
-}
-
-.answer-correct {
-    padding: 10px;
-    background-color: #d4edda;
-    border-radius: 5px;
-    margin-bottom: 10px;
-    color: #155724;
-}
-
-.teacher-feedback {
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid #eee;
-}
-
-.teacher-feedback h4 {
+.result-section h3 {
     color: #333;
-    font-size: 16px;
-    margin-bottom: 10px;
 }
 
-.teacher-comment {
+.answer-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.answer-card.correct {
+    border-color: #4caf50;
+}
+
+.answer-card.incorrect {
+    border-color: #f44336;
+}
+
+.answer-label {
+    font-weight: bold;
+}
+
+.points-info {
+    font-size: 14px;
+    color: #555;
+}
+
+.no-answers {
+    color: #999;
     font-style: italic;
-    color: #666;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
 }
 
 /* Стили для страницы проверки тестов */
@@ -666,23 +682,184 @@
 /* Стили для полей ввода и текстовых областей */
 textarea,
 input[type="text"] {
-    background-color: white; /* Белый фон */
-    color: #333; /* Черный текст */
-    border: 1px solid #ccc; /* Светло-серая рамка */
-    border-radius: 4px; /* Закругленные углы */
-    padding: 10px; /* Отступы внутри поля */
-    width: 100%; /* Ширина 100% */
-    box-sizing: border-box; /* Учитываем отступы и границы в ширине */
-    transition: border-color 0.3s; /* Плавный переход для изменения цвета рамки */
+    background-color: white;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
 }
 
 textarea:focus,
 input[type="text"]:focus {
-    border-color: #007bff; /* Цвет рамки при фокусе */
-    outline: none; /* Убираем стандартный контур */
+    border-color: #007bff;
+    outline: none;
 }
 
 .answer-input label {
-    color: #333; /* Черный текст для меток */
-    font-weight: 500; /* Полужирный текст */
+    color: #333;
+    font-weight: 500;
+}
+
+.answer-item h4 {
+    color: #333;
+}
+
+/* Стили для блока статистики */
+.student-stats-container {
+    margin: 20px 0;
+}
+
+.stats-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.stats-card h3 {
+    color: #333;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 10px;
+}
+
+.stats-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.chart-container {
+    flex: 1;
+    min-width: 300px;
+    min-height: 250px;
+}
+
+.stats-info {
+    flex: 1;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.stat-item {
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.stat-label {
+    font-weight: bold;
+    color: #333;
+}
+
+.stat-value {
+    color: #555;
+}
+
+.stat-value.correct {
+    color: #4caf50;
+}
+
+.stat-value.incorrect {
+    color: #f44336;
+}
+
+.current-test {
+    background-color: #e3f2fd;
+    border-left: 3px solid #2196f3;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 768px) {
+    .stats-grid {
+        flex-direction: column;
+    }
+    
+    .chart-container, .stats-info {
+        width: 100%;
+    }
+}
+
+/* Стили для печати */
+@media print {
+    /* Скрываем все элементы, которые не нужны при печати */
+    body > *:not(.test-result-container),
+    header, footer, nav, .navbar,
+    .messages,
+    .result-actions,
+    .btn {
+        display: none !important;
+    }
+    
+    /* Основной контейнер должен быть виден при печати */
+    .test-result-container {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background-color: white !important;
+        box-shadow: none !important;
+    }
+    
+    /* Показываем только то, что нужно печатать */
+    .print-container {
+        display: block !important;
+    }
+    
+    /* Убираем тени и настраиваем цвета для печати */
+    .result-header,
+    .result-section,
+    .score-box,
+    .status-box,
+    .answer-card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        color: black !important;
+    }
+    
+    /* Настройка заголовков для печати */
+    h1, h2, h3, h4 {
+        color: black !important;
+    }
+    
+    /* Убираем фоновые цвета */
+    .result-header {
+        background-color: white !important;
+        color: black !important;
+        padding: 10px !important;
+        border-bottom: 2px solid #333 !important;
+    }
+    
+    /* Настройки для текста */
+    body {
+        font-size: 12pt !important;
+        line-height: 1.5 !important;
+        color: black !important;
+        background-color: white !important;
+    }
+    
+    /* Убираем лишние отступы */
+    .result-content {
+        margin-top: 10px !important;
+    }
+    
+    /* Адаптируем карточки ответов для печати */
+    .answer-card, .answer-item {
+        page-break-inside: avoid !important;
+        margin-bottom: 15px !important;
+    }
+}
+
+/* Стиль для контейнера печати */
+.print-container {
+    /* По умолчанию такой же, как test-result-container */
 } 

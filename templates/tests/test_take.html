@@ -112,11 +112,8 @@
             </div>
         </div>
         
-        <div class="form-buttons">
-            <button type="submit" name="save_answers" class="btn btn-secondary">
-                <i class="fas fa-save"></i> Сохранить ответы
-            </button>
-            <button type="submit" name="finish_test" class="btn btn-primary" onclick="return confirm('Вы уверены, что хотите завершить тест? После этого вы не сможете изменить свои ответы.')">
+        <div class="test-actions">
+            <button type="submit" name="submit_test" class="btn btn-primary submit-test">
                 <i class="fas fa-check-circle"></i> Завершить тест
             </button>
         </div>
@@ -193,6 +190,16 @@
             if (event.target === modal) {
                 modal.style.display = "none";
             }
+        }
+
+        // Предупреждение перед завершением
+        const submitButton = document.querySelector('.submit-test');
+        if (submitButton) {
+            submitButton.addEventListener('click', function(e) {
+                if (!confirm('Вы уверены, что хотите завершить тест? После завершения вы не сможете изменить свои ответы.')) {
+                    e.preventDefault();
+                }
+            });
         }
     });
 </script>

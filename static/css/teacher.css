@@ -1,0 +1,43 @@
+.student-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.student-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.progress-section {
+    flex: 1;
+    margin-right: 20px;
+}
+
+.answers-stats {
+    flex: 1;
+    max-width: 300px;
+}
+
+.chart-container {
+    height: 200px;
+    margin: 15px 0;
+}
+
+.stats-details {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.progress {
+    height: 20px;
+    margin: 10px 0;
+}
+
+.progress-bar {
+    background-color: #007bff;
+} 

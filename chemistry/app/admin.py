@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, News, Comment, Category, Test, Article, Material, ClassInvitation, TestQuestion, TestAttempt, TestAnswer, QuestionImage
+from .models import User, News, Comment, Category, Test, Article, Material, ClassInvitation, TestQuestion, TestAttempt, TestAnswer, QuestionImage, Class, ClassStudent
 
 class NewsAdmin(admin.ModelAdmin):
     list_display = ('title', 'category', 'created_at', 'is_published')
@@ -45,9 +45,10 @@ class TestAdmin(admin.ModelAdmin):
 
 @admin.register(TestAttempt)
 class TestAttemptAdmin(admin.ModelAdmin):
-    list_display = ('user', 'test', 'status', 'score', 'max_score', 'started_at', 'completed_at')
+    list_display = ('id', 'user_id', 'test', 'status', 'score', 'started_at', 'completed_at')
     list_filter = ('status', 'test')
-    search_fields = ('user__username',)
+    search_fields = ('user_id', 'test__title')
+    readonly_fields = ('started_at',)
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):

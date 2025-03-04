@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load dict_filters %}
+{% load static %}
 
 {% block title %}Результаты теста | Химия{% endblock %}
 
@@ -19,149 +20,137 @@
     </div>
     {% endif %}
 
-    <a href="{% url 'test_list' %}" class="btn btn-secondary back-button">
-        <i class="fas fa-arrow-left"></i> Назад к тестам
-    </a>
-    
-    <div class="test-header">
-        <h1>Результаты теста: {{ test.title }}</h1>
-    </div>
-
-    <div class="result-summary">
-        <div>
-            <p class="result-score">
-                Ваш результат: {{ attempt.score }} из {{ attempt.max_score }} баллов ({{ attempt.get_percent_score }}%)
-            </p>
-            <div class="result-progress">
-                <div class="result-progress-bar" style="width: {{ attempt.get_percent_score }}%"></div>
+    <!-- Контейнер для печати -->
+    <div class="print-container">
+        <div class="result-header">
+            <h1>{{ test.title }} - Результаты</h1>
+            <div class="score-summary">
+                <div class="score-box {% if attempt.status == 'awaiting_review' %}score-pending{% else %}score-final{% endif %}">
+                    <div class="score-label">Ваш результат:</div>
+                    <div class="score-value">
+                        {% if attempt.status == 'awaiting_review' %}
+                            <span class="pending-text">Ожидает проверки</span>
+                        {% else %}
+                            {{ attempt.score }} / {{ attempt.max_score }}
+                            <span class="score-percent">({{ attempt.get_percent_score }}%)</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="status-box status-{{ attempt.status }}">
+                    <div class="status-label">Статус:</div>
+                    <div class="status-value">
+                        {% if attempt.status == 'completed' %}
+                            Завершен
+                        {% elif attempt.status == 'awaiting_review' %}
+                            Ожидает проверки учителем
+                        {% elif attempt.status == 'reviewed' %}
+                            Проверен
+                        {% elif attempt.status == 'timeout' %}
+                            Время истекло
+                        {% else %}
+                            {{ attempt.status }}
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
-        <div>
-            <span class="result-status">
-                {% if attempt.status == 'completed' %}
-                    Завершен
-                {% elif attempt.status == 'awaiting_review' %}
-                    Ожидает проверки
-                {% elif attempt.status == 'reviewed' %}
-                    Проверен
-                {% endif %}
-            </span>
-        </div>
-    </div>
-
-    <div class="answers-list">
-        <h2>Ваши ответы</h2>
         
-        <!-- Ответы на часть A -->
-        <h3>Часть A: Вопросы с кратким ответом</h3>
-        {% for answer in part_a_answers %}
-            <div class="answer-item {% if answer.is_correct %}correct{% else %}incorrect{% endif %}">
-                <div class="answer-question">{{ answer.question.question_text }}</div>
-                
-                {% if answer.question.image %}
-                    <div class="question-image-primary">
-                        <img src="{{ answer.question.image.url }}" alt="Основное изображение к вопросу" class="img-fluid">
-                    </div>
-                {% endif %}
-                
-                {% if answer.question.additional_images.exists %}
-                    <div class="question-image-gallery">
-                        {% for img in answer.question.additional_images.all %}
-                            <div class="gallery-item">
-                                <img src="{{ img.image.url }}" alt="{{ img.caption }}" class="img-fluid">
-                                {% if img.caption %}
-                                    <div class="image-caption">{{ img.caption }}</div>
+        <div class="result-content">
+            <h2>Ваши ответы</h2>
+            
+            <div class="result-section">
+                <h3>Часть A: Вопросы с кратким ответом</h3>
+                {% if answers_part_a %}
+                    <div class="answers-grid">
+                        {% for answer in answers_part_a %}
+                            <div class="answer-card {% if answer.is_correct %}correct{% else %}incorrect{% endif %}">
+                                <div class="question-number">Вопрос {{ forloop.counter }}</div>
+                                <div class="question-text">{{ answer.question.text|safe }}</div>
+                                
+                                {% if answer.question.image %}
+                                    <div class="question-image">
+                                        <img src="{{ answer.question.image.url }}" alt="Иллюстрация к вопросу">
+                                    </div>
                                 {% endif %}
+                                
+                                <div class="user-answer">
+                                    <span class="answer-label">Ваш ответ:</span>
+                                    <span class="answer-text">{{ answer.answer_text }}</span>
+                                </div>
+                                
+                                <div class="correct-answer">
+                                    <span class="answer-label">Правильный ответ:</span>
+                                    <span class="answer-text">{{ answer.question.answer }}</span>
+                                </div>
+                                
+                                <div class="points-info">
+                                    <span class="points-earned">{{ answer.points_awarded }}</span> / <span class="points-total">{{ answer.question.points }}</span> баллов
+                                </div>
                             </div>
                         {% endfor %}
                     </div>
-                {% endif %}
-                
-                <div class="answer-user">
-                    <strong>Ваш ответ:</strong> {{ answer.answer_text }}
-                </div>
-                
-                <div class="answer-correct">
-                    <strong>Правильный ответ:</strong> {{ answer.question.answer }}
-                </div>
-                
-                <div class="answer-result">
-                    {% if answer.is_correct %}
-                        <span class="text-success"><i class="fas fa-check"></i> Верно ({{ answer.points_awarded }} из {{ answer.question.points }} баллов)</span>
-                    {% else %}
-                        <span class="text-danger"><i class="fas fa-times"></i> Неверно (0 из {{ answer.question.points }} баллов)</span>
-                    {% endif %}
-                </div>
-            </div>
-        {% empty %}
-            <p>Нет ответов на вопросы части A</p>
-        {% endfor %}
-        
-        <!-- Ответы на часть B -->
-        <h3>Часть B: Вопросы с развернутым ответом</h3>
-        {% for answer in part_b_answers %}
-            <div class="answer-item {% if answer.is_correct == True %}correct{% elif answer.is_correct == False %}incorrect{% else %}awaiting-review{% endif %}">
-                <div class="answer-question">{{ answer.question.question_text }}</div>
-                
-                {% if answer.question.image %}
-                    <div class="question-image-primary">
-                        <img src="{{ answer.question.image.url }}" alt="Основное изображение к вопросу" class="img-fluid">
-                    </div>
-                {% endif %}
-                
-                {% if answer.question.additional_images.exists %}
-                    <div class="question-image-gallery">
-                        {% for img in answer.question.additional_images.all %}
-                            <div class="gallery-item">
-                                <img src="{{ img.image.url }}" alt="{{ img.caption }}" class="img-fluid">
-                                {% if img.caption %}
-                                    <div class="image-caption">{{ img.caption }}</div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-                
-                <div class="answer-user">
-                    <strong>Ваш ответ:</strong>
-                    <div>{{ answer.answer_text|linebreaks }}</div>
-                </div>
-                
-                {% if attempt.status == 'reviewed' %}
-                    <div class="answer-result">
-                        <span>Баллов: {{ answer.points_awarded }} из {{ answer.question.points }}</span>
-                    </div>
-                    
-                    {% if answer.teacher_comment %}
-                        <div class="teacher-feedback">
-                            <h4>Комментарий учителя:</h4>
-                            <div class="teacher-comment">{{ answer.teacher_comment|linebreaks }}</div>
-                        </div>
-                    {% endif %}
                 {% else %}
-                    <div class="awaiting-review-notice">
-                        <span class="text-warning"><i class="fas fa-clock"></i> Ожидает проверки учителем</span>
-                    </div>
+                    <p class="no-answers">Нет ответов на вопросы части A</p>
                 {% endif %}
             </div>
-        {% empty %}
-            <p>Нет ответов на вопросы части B</p>
-        {% endfor %}
+            
+            <div class="result-section">
+                <h3>Часть B: Вопросы с развернутым ответом</h3>
+                {% if answers_part_b %}
+                    <div class="answers-list">
+                        {% for answer in answers_part_b %}
+                            <div class="answer-item">
+                                <h4>Вопрос {{ forloop.counter }}</h4>
+                                <div class="question-text">{{ answer.question.text|safe }}</div>
+                                
+                                {% if answer.question.image %}
+                                    <div class="question-image">
+                                        <img src="{{ answer.question.image.url }}" alt="Иллюстрация к вопросу">
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="user-answer">
+                                    <div class="answer-label">Ваш ответ:</div>
+                                    <div class="answer-text-long">{{ answer.answer_text|linebreaks }}</div>
+                                </div>
+                                
+                                {% if answer.teacher_comment or attempt.status == 'reviewed' %}
+                                    <div class="teacher-feedback">
+                                        <div class="feedback-label">Комментарий учителя:</div>
+                                        <div class="feedback-text">{{ answer.teacher_comment|default:"Нет комментария"|linebreaks }}</div>
+                                    </div>
+                                    
+                                    <div class="points-info">
+                                        <span class="points-earned">{{ answer.points_awarded|default:"0" }}</span> / <span class="points-total">{{ answer.question.points }}</span> баллов
+                                    </div>
+                                {% else %}
+                                    <div class="awaiting-review">
+                                        Ответ ожидает проверки
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="no-answers">Нет ответов на вопросы части B</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="result-actions">
+        <a href="{% url 'test_list' %}" class="btn btn-primary">
+            <i class="fas fa-list"></i> Все тесты
+        </a>
+        {% if attempt.status == 'completed' or attempt.status == 'reviewed' %}
+            <a href="{% url 'test_start' test_id=test.id %}" class="btn btn-success">
+                <i class="fas fa-redo"></i> Пройти тест заново
+            </a>
+        {% endif %}
     </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Скрываем сообщения через 3 секунды
-        const messageDivs = document.querySelectorAll('.messages .alert');
-        messageDivs.forEach(function(message) {
-            setTimeout(function() {
-                message.style.opacity = '0';
-                setTimeout(function() {
-                    message.remove();
-                }, 300);
-            }, 3000);
-        });
-    });
-</script>
+<!-- Обновленный JavaScript для печати -->
+<script src="{% static 'js/test_result.js' %}"></script>
 {% endblock %} 

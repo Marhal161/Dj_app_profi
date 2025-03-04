@@ -9,4 +9,8 @@ def get(dictionary, key):
     """
     if dictionary is None or key is None:
         return None
-    return dictionary.get(key) 
+    return dictionary.get(key)
+
+@register.filter
+def subtract(value, arg):
+    return value - arg 
