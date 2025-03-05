@@ -28,9 +28,9 @@
                 <ul class="nav-links" id="nav-links">
                     <li><a href="/app/"><i class="fas fa-home"></i> Главная</a></li>
                     <li><a href="/app/articles/"><i class="fas fa-file-alt"></i> Статьи</a></li>
+                    <li><a href="/app/tests/"><i class="fas fa-vial"></i> Тесты</a></li>
                     {% if is_authenticated %}
                         <li><a href="/app/materials/"><i class="fas fa-book"></i> Материалы</a></li>
-                        <li><a href="/app/tests/"><i class="fas fa-vial"></i> Тесты</a></li>
                         {% if user_info.user_type == 'teacher' %}
                             <li><a href="/app/dashboard/"><i class="fas fa-chalkboard-teacher"></i> Панель учителя</a></li>
                             <li><a href="{% url 'class' %}"><i class="fas fa-users"></i> Мой класс</a></li>

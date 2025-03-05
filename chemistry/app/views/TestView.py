@@ -10,17 +10,13 @@ from django.db.models import Sum, Count
 class TestListView(View):
     template_name = 'tests/test_list.html'
     
-    @method_decorator(check_auth_tokens)
+    @method_decorator(check_auth_tokens, name='dispatch')
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
     
     def get(self, request, *args, **kwargs):
-        user_info = request.user_info
-        is_authenticated = request.is_authenticated
-        
-        if not is_authenticated:
-            messages.error(request, 'Необходимо войти в систему')
-            return redirect('login_page')
+        user_info = request.user_info if hasattr(request, 'user_info') else None
+        is_authenticated = request.is_authenticated if hasattr(request, 'is_authenticated') else False
         
         tests = Test.objects.filter(is_published=True).order_by('-created_at')
         
@@ -48,22 +44,19 @@ class TestListView(View):
 class TestDetailView(View):
     template_name = 'tests/test_detail.html'
     
-    @method_decorator(check_auth_tokens)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
     
     def get(self, request, test_id, *args, **kwargs):
-        user_info = request.user_info
-        is_authenticated = request.is_authenticated
-        
-        if not is_authenticated:
-            messages.error(request, 'Необходимо войти в систему')
-            return redirect('login_page')
+        user_info = getattr(request, 'user_info', None)
+        is_authenticated = user_info is not None
         
         test = get_object_or_404(Test, id=test_id, is_published=True)
         
         # Проверяем, есть ли уже попытка прохождения теста
-        attempt = TestAttempt.objects.filter(user_id=user_info['user_id'], test=test).first()
+        attempt = None
+        if is_authenticated:
+            attempt = TestAttempt.objects.filter(user_id=user_info['user_id'], test=test).first()
         
         context = {
             'title': test.title,
@@ -75,18 +68,27 @@ class TestDetailView(View):
         return render(request, self.template_name, context)
     
     def post(self, request, test_id, *args, **kwargs):
-        user_info = request.user_info
-        is_authenticated = request.is_authenticated
-        
-        if not is_authenticated:
-            messages.error(request, 'Необходимо войти в систему')
-            return redirect('login_page')
+        user_info = getattr(request, 'user_info', None)
+        is_authenticated = user_info is not None
         
         test = get_object_or_404(Test, id=test_id, is_published=True)
         
         # Начать новую попытку
         if 'start_test' in request.POST:
-            # Проверяем, существует ли уже завершенная попытка
+            if not is_authenticated:
+                # Для неавторизованных пользователей создаем временную попытку
+                questions = test.questions.filter(question_type='part_a')
+                max_score = questions.aggregate(total=Sum('points'))['total'] or 0
+                
+                attempt = TestAttempt.objects.create(
+                    test=test,
+                    user=None,  # Явно указываем, что пользователя нет
+                    max_score=max_score,
+                    status='in_progress'
+                )
+                return redirect('test_take', test_id=test_id, attempt_id=attempt.id)
+            
+            # Для авторизованных пользователей - обычная логика
             existing_attempt = TestAttempt.objects.filter(
                 user_id=user_info['user_id'], 
                 test=test,
@@ -118,28 +120,26 @@ class TestDetailView(View):
 class TestTakeView(View):
     template_name = 'tests/test_take.html'
     
-    @method_decorator(check_auth_tokens)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
     
     def get(self, request, test_id, attempt_id, *args, **kwargs):
-        user_info = request.user_info
-        is_authenticated = request.is_authenticated
-        
-        if not is_authenticated:
-            messages.error(request, 'Необходимо войти в систему')
-            return redirect('login_page')
+        user_info = getattr(request, 'user_info', None)
+        is_authenticated = user_info is not None
         
         test = get_object_or_404(Test, id=test_id, is_published=True)
         attempt = get_object_or_404(
             TestAttempt, 
             id=attempt_id, 
-            user_id=user_info['user_id'], 
             test=test, 
             status='in_progress'
         )
         
-        questions = test.questions.all().order_by('order', 'id')
+        # Для неавторизованных пользователей показываем только часть A
+        if not is_authenticated:
+            questions = test.questions.filter(question_type='part_a').order_by('order', 'id')
+        else:
+            questions = test.questions.all().order_by('order', 'id')
         
         # Получаем уже сохраненные ответы
         saved_answers = {}
@@ -158,20 +158,20 @@ class TestTakeView(View):
         return render(request, self.template_name, context)
     
     def post(self, request, test_id, attempt_id, *args, **kwargs):
-        user_info = request.user_info
-        is_authenticated = request.is_authenticated
-        
-        if not is_authenticated:
-            messages.error(request, 'Необходимо войти в систему')
-            return redirect('login_page')
+        user_info = getattr(request, 'user_info', None)
+        is_authenticated = user_info is not None
         
         test = get_object_or_404(Test, id=test_id, is_published=True)
-        attempt = get_object_or_404(TestAttempt, id=attempt_id, user_id=user_info['user_id'], test_id=test_id)
+        attempt = get_object_or_404(TestAttempt, id=attempt_id, test=test)
         
         # Проверяем, что отправка теста, а не промежуточное сохранение
         if 'submit_test' in request.POST:
-            # Получаем все вопросы теста
-            questions = TestQuestion.objects.filter(test=test)
+            # Для неавторизованных пользователей берем только вопросы части A
+            if not is_authenticated:
+                questions = TestQuestion.objects.filter(test=test, question_type='part_a')
+            else:
+                questions = TestQuestion.objects.filter(test=test)
+            
             # Базовый балл
             score = 0
             # Флаг наличия вопросов части B
@@ -212,20 +212,11 @@ class TestTakeView(View):
             attempt.score = score
             attempt.completed_at = timezone.now()
             
-            # После обработки всех ответов
-            
-            # Проверяем, есть ли в тесте вопросы части B
-            has_part_b = TestQuestion.objects.filter(
-                test_id=test_id, 
-                question_type__in=['long_answer', 'part_b']
-            ).exists()
-            
-            # Если есть вопросы части B, то статус "ожидает проверки", иначе "завершен"
-            if has_part_b:
+            if has_part_b and is_authenticated:
                 attempt.status = 'awaiting_review'
             else:
                 attempt.status = 'completed'
-                
+            
             attempt.save()
             
             messages.success(request, 'Тест успешно завершен')
@@ -252,23 +243,17 @@ class TestTakeView(View):
 class TestResultView(View):
     template_name = 'tests/test_result.html'
     
-    @method_decorator(check_auth_tokens)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
     
     def get(self, request, test_id, attempt_id, *args, **kwargs):
-        user_info = request.user_info
-        is_authenticated = request.is_authenticated
-        
-        if not is_authenticated:
-            messages.error(request, 'Необходимо войти в систему')
-            return redirect('login_page')
+        user_info = getattr(request, 'user_info', None)
+        is_authenticated = user_info is not None
         
         test = get_object_or_404(Test, id=test_id)
         attempt = get_object_or_404(
             TestAttempt, 
             id=attempt_id, 
-            user_id=user_info['user_id'], 
             test=test
         )
         

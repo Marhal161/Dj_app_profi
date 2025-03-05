@@ -19,6 +19,14 @@
     </div>
     {% endif %}
 
+    {% if not is_authenticated %}
+    <div class="alert alert-warning">
+        <i class="fas fa-info-circle"></i>
+        Вы не авторизованы. Вы можете пройти только часть A теста. Для прохождения полного теста, пожалуйста, 
+        <a href="{% url 'login_page' %}">войдите в систему</a>.
+    </div>
+    {% endif %}
+
     <a href="{% url 'test_list' %}" class="btn btn-secondary back-button">
         <i class="fas fa-arrow-left"></i> Назад к тестам
     </a>

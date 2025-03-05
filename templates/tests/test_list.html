@@ -21,7 +21,14 @@
     </div>
     {% endif %}
     
-    {% if is_authenticated %}
+    {% if not is_authenticated %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        Вы можете пройти часть A тестов без регистрации. Для прохождения полного теста, включая часть B, 
+        пожалуйста, <a href="{% url 'login_page' %}" class="alert-link">войдите в систему</a>.
+    </div>
+    {% endif %}
+    
     <div class="tests-list">
         {% if tests %}
             <div class="tests-grid">
@@ -89,11 +96,6 @@
             </div>
         {% endif %}
     </div>
-    {% else %}
-    <div class="not-authenticated">
-        <p>Для прохождения тестов необходимо <a href="{% url 'login_page' %}">войти в систему</a>.</p>
-    </div>
-    {% endif %}
 </div>
 
 <script>

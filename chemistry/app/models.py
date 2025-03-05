@@ -170,7 +170,7 @@ class TestAttempt(models.Model):
     )
     
     test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='attempts')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='test_attempts')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='test_attempts', null=True, blank=True)
     started_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='in_progress')
