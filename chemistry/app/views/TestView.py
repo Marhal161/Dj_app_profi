@@ -448,9 +448,8 @@ class TestReviewDetailView(View):
                 if points_key in request.POST:
                     # Получаем баллы
                     points = int(request.POST.get(points_key, 0))
-                    # Ограничиваем максимальным количеством баллов за вопрос
-                    max_points = answer.question.points
-                    points = min(points, max_points)
+                    # Ограничиваем баллы от 0 до 2
+                    points = max(0, min(points, 2))
                     
                     # Сохраняем баллы
                     answer.points_awarded = points
@@ -475,6 +474,7 @@ class TestReviewDetailView(View):
             
             # Обновляем статус на "проверен"
             attempt.status = 'reviewed'
+            attempt.reviewed_at = timezone.now()
             attempt.save()
             
             messages.success(request, 'Оценка успешно сохранена')

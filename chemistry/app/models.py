@@ -135,7 +135,7 @@ class TestQuestion(models.Model):
     question_type = models.CharField(max_length=10, choices=QUESTION_TYPES, default='part_a', verbose_name='Тип вопроса')
     answer = models.TextField(verbose_name='Правильный ответ', blank=True, help_text='Для вопросов части A')
     image = models.ImageField(upload_to='question_images/', blank=True, null=True, verbose_name='Основное изображение')
-    points = models.PositiveIntegerField(default=1, verbose_name='Баллы')
+    points = models.PositiveIntegerField(default=2, verbose_name='Баллы')
     order = models.PositiveIntegerField(default=0, verbose_name='Порядок')
     
     def __str__(self):

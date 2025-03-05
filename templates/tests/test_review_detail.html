@@ -121,10 +121,11 @@
                                     <input type="number" 
                                            id="points_{{ answer.id }}" 
                                            name="points_{{ answer.id }}" 
-                                           min="0" 
-                                           max="{{ answer.question.points }}" 
-                                           class="points-input" 
-                                           value="{{ answer.points_awarded|default:'0' }}" required>
+                                           min="0"
+                                           max="2"
+                                           class="form-control" 
+                                           value="{{ answer.points_awarded }}"
+                                           required>
                                 </div>
                                 
                                 <div class="form-group">

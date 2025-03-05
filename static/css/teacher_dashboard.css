@@ -310,24 +310,28 @@
 
 .progress-stats {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 15px;
+    padding: 10px;
 }
 
 .stat-item {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
 }
 
 .stat-label {
-    font-size: 13px;
-    color: #7f8c8d;
-    margin-bottom: 5px;
+    color: #6c757d;
+    font-size: 14px;
 }
 
 .stat-value {
-    font-size: 18px;
-    font-weight: 500;
+    font-size: 16px;
+    font-weight: 600;
     color: #2c3e50;
 }
 

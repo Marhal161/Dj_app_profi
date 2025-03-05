@@ -73,16 +73,6 @@
                     <i class="fas fa-clipboard-check"></i>
                 </div>
             </div>
-            
-            <div class="card">
-                <div class="card-content">
-                    <h3>Средний балл</h3>
-                    <p class="stat-number">{{ students.avg_score|default:"0"|floatformat:1 }}</p>
-                </div>
-                <div class="card-icon">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-            </div>
         </div>
         
         {% if students %}
@@ -103,7 +93,6 @@
                         <tr>
                             <th>Имя ученика</th>
                             <th>Пройдено тестов</th>
-                            <th>Средний балл</th>
                             <th>На проверке</th>
                             <th></th>
                         </tr>
@@ -113,7 +102,6 @@
                             <tr class="student-row" data-student-id="{{ student.id }}">
                                 <td class="student-name">{{ student.username }}</td>
                                 <td>{{ student.completed_tests }} / {{ student.total_tests }}</td>
-                                <td>{{ student.avg_score|default:"0"|floatformat:1 }}</td>
                                 <td>
                                     <span class="awaiting-badge {% if student.awaiting_count > 0 %}has-awaiting{% endif %}">
                                         {{ student.awaiting_count }}
@@ -144,17 +132,30 @@
                                                         <span class="stat-label">Всего тестов:</span>
                                                         <span class="stat-value">{{ student.total_tests }}</span>
                                                     </div>
-                                                    <div class="stat-item">
-                                                        <span class="stat-label">Средний балл:</span>
-                                                        <span class="stat-value">{{ student.avg_score|default:"0"|floatformat:1 }}</span>
-                                                    </div>
                                                 </div>
                                             </div>
                                             
                                             <div class="details-column">
                                                 <h4>Прогресс обучения</h4>
-                                                <div class="chart-container">
-                                                    <canvas id="chart-{{ student.id }}" width="200" height="200"></canvas>
+                                                <div class="progress-stats">
+                                                    <div class="stat-item">
+                                                        <span class="stat-label">Правильных ответов:</span>
+                                                        <span class="stat-value">{{ student.correct_answers|default:0 }}</span>
+                                                    </div>
+                                                    <div class="stat-item">
+                                                        <span class="stat-label">Всего ответов:</span>
+                                                        <span class="stat-value">{{ student.total_answers|default:0 }}</span>
+                                                    </div>
+                                                    <div class="stat-item">
+                                                        <span class="stat-label">Процент успеха:</span>
+                                                        <span class="stat-value">
+                                                            {% if student.total_answers %}
+                                                                {% widthratio student.correct_answers student.total_answers 100 %}%
+                                                            {% else %}
+                                                                0%
+                                                            {% endif %}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

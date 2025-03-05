@@ -38,9 +38,9 @@ class TeacherDashboardView(View):
                 class_group=teacher_class
             ).values_list('student_id', flat=True)
         ).annotate(
-            total_tests=Count('test_attempts', distinct=True),
+            total_tests=Count('test_attempts__test', distinct=True),
             completed_tests=Count('test_attempts', 
-                filter=Q(test_attempts__status__in=['completed', 'reviewed', 'awaiting_review']),
+                filter=Q(test_attempts__status='reviewed'),
                 distinct=True
             ),
             avg_score=Avg(
@@ -52,12 +52,22 @@ class TeacherDashboardView(View):
                 distinct=True
             ),
             total_answers=Count('test_attempts__answers', 
-                filter=Q(test_attempts__answers__question__question_type='part_a')
+                filter=Q(
+                    test_attempts__status='reviewed'
+                )
             ),
             correct_answers=Count('test_attempts__answers',
                 filter=Q(
-                    test_attempts__answers__question__question_type='part_a',
-                    test_attempts__answers__is_correct=True
+                    test_attempts__status='reviewed'
+                ) & (
+                    Q(
+                        test_attempts__answers__question__question_type='part_a',
+                        test_attempts__answers__is_correct=True
+                    ) |
+                    Q(
+                        test_attempts__answers__question__question_type='part_b',
+                        test_attempts__answers__points_awarded=2
+                    )
                 )
             )
         ).order_by('username')
