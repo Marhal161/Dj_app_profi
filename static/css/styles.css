@@ -1245,4 +1245,36 @@ img {
 .modal-buttons button:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Стили для правой части хедера */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.profile-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: var(--text-color);
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+}
+
+.profile-link:hover {
+    background: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.profile-link.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.profile-link i {
+    font-size: 1.6rem;
 } 

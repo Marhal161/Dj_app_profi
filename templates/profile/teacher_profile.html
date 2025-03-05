@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} | Химия{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="settings-btn">
+            <button onclick="openEditModal()" class="btn-settings">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
+        <div class="profile-avatar">
+            <i class="fas fa-chalkboard-teacher"></i>
+        </div>
+        <div class="profile-info">
+            <h1>{{ user.first_name }} {{ user.last_name }}</h1>
+            <p class="username">@{{ user.username }}</p>
+            <p class="email">{{ user.email }}</p>
+            
+            <div class="class-info">
+                {% if teacher_class %}
+                <div class="class-details">
+                    <p class="class-name">
+                        <i class="fas fa-users"></i>
+                        Класс: {{ teacher_class.name }}
+                    </p>
+                    <p class="students-count">
+                        <i class="fas fa-user-graduate"></i>
+                        Количество учеников: {{ students_count }}
+                    </p>
+                </div>
+                {% else %}
+                <p class="no-class">У вас пока нет назначенного класса</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования профиля -->
+<div id="editProfileModal" class="modal">
+    <div class="modal-content">
+        <button class="close-btn" onclick="closeEditModal()">×</button>
+        <h2>Редактирование профиля</h2>
+        <form id="editProfileForm">
+            <div class="form-group">
+                <label for="first_name">Имя</label>
+                <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+            </div>
+            <div class="form-group">
+                <label for="last_name">Фамилия</label>
+                <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="{{ user.email }}" required>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn-secondary" onclick="closeEditModal()">Отмена</button>
+                <button type="submit" class="btn-primary">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openEditModal() {
+    document.getElementById('editProfileModal').classList.add('active');
+}
+
+function closeEditModal() {
+    document.getElementById('editProfileModal').classList.remove('active');
+}
+
+document.getElementById('editProfileForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        first_name: document.getElementById('first_name').value,
+        last_name: document.getElementById('last_name').value,
+        email: document.getElementById('email').value,
+    };
+    
+    try {
+        const response = await fetch('{% url "profile" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        alert('Произошла ошибка при сохранении данных');
+    }
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %} 

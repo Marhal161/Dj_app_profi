@@ -858,8 +858,3 @@ input[type="text"]:focus {
         margin-bottom: 15px !important;
     }
 }
-
-/* Стиль для контейнера печати */
-.print-container {
-    /* По умолчанию такой же, как test-result-container */
-} 

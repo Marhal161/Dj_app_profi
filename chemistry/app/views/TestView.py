@@ -126,13 +126,12 @@ class TestDetailView(View):
 class TestTakeView(View):
     template_name = 'tests/test_take.html'
     
-    @method_decorator(check_auth_tokens)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
     
     def get(self, request, test_id, attempt_id, *args, **kwargs):
-        is_authenticated = request.is_authenticated
-        user_info = request.user_info if is_authenticated else None
+        user_info = getattr(request, 'user_info', None)
+        is_authenticated = user_info is not None
         
         test = get_object_or_404(Test, id=test_id, is_published=True)
         attempt = get_object_or_404(
@@ -165,8 +164,8 @@ class TestTakeView(View):
         return render(request, self.template_name, context)
     
     def post(self, request, test_id, attempt_id, *args, **kwargs):
-        is_authenticated = request.is_authenticated
-        user_info = request.user_info if is_authenticated else None
+        user_info = getattr(request, 'user_info', None)
+        is_authenticated = user_info is not None
         
         test = get_object_or_404(Test, id=test_id, is_published=True)
         attempt = get_object_or_404(TestAttempt, id=attempt_id, test=test)
@@ -250,13 +249,12 @@ class TestTakeView(View):
 class TestResultView(View):
     template_name = 'tests/test_result.html'
     
-    @method_decorator(check_auth_tokens)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
     
     def get(self, request, test_id, attempt_id, *args, **kwargs):
-        is_authenticated = request.is_authenticated
-        user_info = request.user_info if is_authenticated else None
+        user_info = getattr(request, 'user_info', None)
+        is_authenticated = user_info is not None
         
         test = get_object_or_404(Test, id=test_id)
         attempt = get_object_or_404(

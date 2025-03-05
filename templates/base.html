@@ -32,7 +32,7 @@
                     {% if is_authenticated %}
                         <li><a href="/app/materials/"><i class="fas fa-book"></i> Материалы</a></li>
                         {% if user_info.user_type == 'teacher' %}
-                            <li><a href="/app/dashboard/"><i class="fas fa-chalkboard-teacher"></i> Панель учителя</a></li>
+                            <li><a href="{% url 'teacher_dashboard' %}" {% if active_page == 'dashboard' %}class="active"{% endif %}>Панель учителя</a></li>
                             <li><a href="{% url 'class' %}"><i class="fas fa-users"></i> Мой класс</a></li>
                         {% elif user_info.user_type == 'student' %}
                             <li><a href="{% url 'class' %}"><i class="fas fa-users"></i> Мой класс</a></li>
@@ -43,6 +43,10 @@
                                 <a href="{% url 'logout_api' %}" class="nav-link">Выйти</a>
                             </div>
                         </li>
+                        <li><a href="{% url 'profile' %}" class="profile-link {% if active_page == 'profile' %}active{% endif %}">
+                            <i class="fas fa-user"></i>
+                            <span>Профиль</span>
+                        </a></li>
                     {% else %}
                         <li><a href="/app/login/"><i class="fas fa-sign-in-alt"></i> Вход</a></li>
                         <li><a href="/app/register/" class="btn-small"><i class="fas fa-user-plus"></i> Регистрация</a></li>
@@ -76,7 +80,6 @@
                         <li><a href="/app/"><i class="fas fa-chevron-right"></i> Главная</a></li>
                         <li><a href="/app/materials/"><i class="fas fa-chevron-right"></i> Материалы</a></li>
                         <li><a href="/app/tests/"><i class="fas fa-chevron-right"></i> Тесты</a></li>
-                        <li><a href="/app/about/"><i class="fas fa-chevron-right"></i> О нас</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
