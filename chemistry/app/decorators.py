@@ -11,6 +11,7 @@ import json
 import requests
 from datetime import datetime, timedelta
 from django.contrib import messages
+from django.http import JsonResponse
 
 logger = logging.getLogger(__name__)
 
@@ -112,10 +113,20 @@ def refresh_access_token(refresh_token):
         return None
 
 def teacher_required(view_func):
-    @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        if not hasattr(request, 'user_info') or not request.user_info or request.user_info.get('user_type') != 'teacher':
-            messages.error(request, 'Доступ запрещен. Эта страница только для учителей.')
-            return redirect('home_page')
+        # Проверяем, что пользователь авторизован
+        if not hasattr(request, 'user_info'):
+            return JsonResponse({
+                'success': False,
+                'error': 'Необходимо войти в систему'
+            }, status=401)
+        
+        # Проверяем, что пользователь является учителем
+        if request.user_info.get('user_type') != 'teacher':
+            return JsonResponse({
+                'success': False,
+                'error': 'Доступ запрещен. Требуются права учителя.'
+            }, status=403)
+        
         return view_func(request, *args, **kwargs)
     return wrapper

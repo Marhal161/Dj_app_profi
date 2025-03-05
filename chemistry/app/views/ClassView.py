@@ -3,8 +3,10 @@ from django.views.generic import View
 from django.contrib import messages
 from django.db.models import Q
 from ..models import Class, User, ClassStudent, ClassInvitation
-from ..decorators import check_auth_tokens
+from ..decorators import check_auth_tokens, teacher_required
 from django.utils.decorators import method_decorator
+import json
+from django.http import JsonResponse
 
 class ClassView(View):
     template_name = 'class.html'
@@ -245,4 +247,25 @@ class ClassView(View):
             return redirect('class')
         
         messages.error(request, 'Недопустимое действие')
-        return redirect('class') 
+        return redirect('class')
+
+class RenameClassView(View):
+    @method_decorator(check_auth_tokens)
+    @method_decorator(teacher_required)
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            new_name = data.get('name')
+            
+            if not new_name:
+                return JsonResponse({'success': False, 'error': 'Название не может быть пустым'})
+            
+            # Получаем класс текущего учителя
+            class_group = Class.objects.get(teacher_id=request.user_info['user_id'])
+            class_group.name = new_name
+            class_group.save()
+            
+            return JsonResponse({'success': True})
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}) 

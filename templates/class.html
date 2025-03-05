@@ -21,8 +21,15 @@
     {% if is_teacher %}
         <div class="class-header">
             <div class="header-content">
-                <h1>{{ class.name }}</h1>
-                <p>Учитель: {{ user_info.username }}</p>
+                <div class="class-info">
+                    <div class="class-title">
+                        <h1 id="className">{{ class.name }}</h1>
+                        <button class="btn btn-settings" id="editClassName" title="Настройки класса">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                    <p>Учитель: {{ user_info.username }}</p>
+                </div>
             </div>
             <button id="openModalBtn" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Добавить ученика
@@ -52,6 +59,23 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-paper-plane"></i> Отправить приглашение
                         </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Модальное окно для редактирования имени класса -->
+        <div class="modal" id="editClassNameModal">
+            <div class="modal-content">
+                <h2>Изменить название класса</h2>
+                <form id="editClassNameForm">
+                    <div class="form-group">
+                        <label for="newClassName">Новое название:</label>
+                        <input type="text" id="newClassName" name="name" required>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <button type="button" class="btn btn-secondary" id="cancelEditClassName">Отмена</button>
                     </div>
                 </form>
             </div>
@@ -262,6 +286,100 @@
         const modalOverlay = document.getElementById('modalOverlay');
         const closeBtn = document.querySelector('.modal-close');
         
+        // Редактирование имени класса
+        const editButton = document.getElementById('editClassName');
+        const editModal = document.getElementById('editClassNameModal');
+        const editForm = document.getElementById('editClassNameForm');
+        const cancelButton = document.getElementById('cancelEditClassName');
+        const classNameElement = document.getElementById('className');
+
+        if (editButton) {
+            editButton.addEventListener('click', function() {
+                editModal.classList.add('active');
+                document.getElementById('newClassName').value = classNameElement.textContent;
+            });
+
+            cancelButton.addEventListener('click', function() {
+                editModal.classList.remove('active');
+            });
+            
+            editModal.addEventListener('click', function(event) {
+                if (event.target === editModal) {
+                    editModal.classList.remove('active');
+                }
+            });
+
+            editForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const newName = document.getElementById('newClassName').value;
+
+                fetch('/app/api/class/rename/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        name: newName
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        classNameElement.textContent = newName;
+                        editModal.classList.remove('active');
+                        showMessage('success', 'Название класса успешно изменено');
+                    } else {
+                        showMessage('error', data.error || 'Произошла ошибка при изменении названия');
+                        editModal.classList.remove('active');
+                    }
+                })
+                .catch(error => {
+                    showMessage('error', 'Произошла ошибка при выполнении запроса');
+                    editModal.classList.remove('active');
+                    console.error('Error:', error);
+                });
+            });
+        }
+
+        // Функция для получения CSRF токена
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Функция для отображения сообщений
+        function showMessage(type, text) {
+            const messagesContainer = document.querySelector('.messages') || createMessagesContainer();
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `alert alert-${type}`;
+            messageDiv.textContent = text;
+            messagesContainer.appendChild(messageDiv);
+
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => messageDiv.remove(), 300);
+            }, 3000);
+        }
+
+        function createMessagesContainer() {
+            const container = document.createElement('div');
+            container.className = 'messages';
+            document.querySelector('.class-container').prepend(container);
+            return container;
+        }
+        
         // Открытие модального окна
         openBtn.addEventListener('click', function() {
             modalOverlay.style.display = 'flex';
@@ -303,4 +421,5 @@
 
 {% block extra_js %}
 <script src="/static/js/modal.js"></script>
+<script src="/static/js/class.js"></script>
 {% endblock %} 

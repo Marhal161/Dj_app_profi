@@ -9,13 +9,14 @@ from .views.LogoutView import LogoutView
 from .views.HomeView import HomePageView
 from .views import NewsView
 from .views.ArticleView import ArticleViewSet, ArticleListView, ArticleDetailView
-from .views.ClassView import ClassView
+from .views.ClassView import ClassView, RenameClassView
 from .views.MaterialView import MaterialView
 from .views.TestView import (
     TestListView, TestDetailView, TestTakeView, 
     TestResultView, TestReviewView, TestReviewDetailView, TestStartView
 )
 from .views.TeacherView import TeacherDashboardView, StudentDetailView, StudentTestsView
+from django.views.decorators.csrf import csrf_protect
 
 # Создаем роутер для API
 router = DefaultRouter()
@@ -58,6 +59,7 @@ urlpatterns = [
     path('dashboard/', TeacherDashboardView.as_view(), name='teacher_dashboard'),
     path('dashboard/student/<int:student_id>/', StudentDetailView.as_view(), name='student_detail'),
     path('dashboard/student/<int:student_id>/tests/', StudentTestsView.as_view(), name='student_tests'),
+    path('api/class/rename/', csrf_protect(RenameClassView.as_view()), name='rename_class'),
 ]
 
 if settings.DEBUG:

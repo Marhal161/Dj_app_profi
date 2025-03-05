@@ -139,7 +139,77 @@ document.addEventListener('DOMContentLoaded', function() {
     // Инициализация анимаций при загрузке
     animateOnScroll();
     window.addEventListener('scroll', animateOnScroll);
+
+    // Редактирование имени класса
+    const editButton = document.getElementById('editClassName');
+    const editModal = document.getElementById('editClassNameModal');
+    const editForm = document.getElementById('editClassNameForm');
+    const cancelButton = document.getElementById('cancelEditClassName');
+    const classNameElement = document.getElementById('className');
+
+    if (editButton) {
+        editButton.addEventListener('click', function() {
+            editModal.classList.add('active');
+            document.getElementById('newClassName').value = classNameElement.textContent;
+        });
+
+        cancelButton.addEventListener('click', function() {
+            editModal.classList.remove('active');
+        });
+        
+        editModal.addEventListener('click', function(event) {
+            if (event.target === editModal) {
+                editModal.classList.remove('active');
+            }
+        });
+
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newName = document.getElementById('newClassName').value;
+
+            fetch('/app/api/class/rename/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    name: newName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    classNameElement.textContent = newName;
+                    editModal.classList.remove('active');
+                    showMessage('success', 'Название класса успешно изменено');
+                } else {
+                    showMessage('error', data.error || 'У вас нет прав для изменения названия класса');
+                    editModal.classList.remove('active');
+                }
+            })
+            .catch(error => {
+                showMessage('error', 'У вас нет прав для изменения названия класса');
+                editModal.classList.remove('active');
+            });
+        });
+    }
 });
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 
 // Функция для плавного появления новых элементов
 function animateElement(element) {
