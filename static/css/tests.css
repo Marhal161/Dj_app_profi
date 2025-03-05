@@ -858,3 +858,63 @@ input[type="text"]:focus {
         margin-bottom: 15px !important;
     }
 }
+
+/* Удаляем старые стили для кнопки генерации */
+.latest-test {
+    position: relative;
+}
+
+/* Добавляем новые стили для карточки генерации */
+.generate-test-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    cursor: pointer;
+    background-color: #f8f9fa;
+    border: 2px dashed #6c757d;
+    transition: all 0.3s ease;
+}
+
+.generate-test-card:hover {
+    background-color: #e9ecef;
+    border-color: #007bff;
+}
+
+.generate-test-content {
+    text-align: center;
+    color: #6c757d;
+}
+
+.generate-test-content i {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.generate-test-content span {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+/* Анимация при наведении */
+.generate-test-card:hover .generate-test-content {
+    color: #007bff;
+    transform: scale(1.05);
+    transition: all 0.3s ease;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .generate-test-card {
+        min-height: 150px;
+    }
+    
+    .generate-test-content i {
+        font-size: 2.5rem;
+    }
+    
+    .generate-test-content span {
+        font-size: 1rem;
+    }
+}

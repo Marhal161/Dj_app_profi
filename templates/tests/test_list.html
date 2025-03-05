@@ -88,6 +88,15 @@
                         </div>
                     </div>
                 {% endfor %}
+                
+                {% if user_info.user_type == 'teacher' %}
+                <div class="test-card generate-test-card" onclick="showGenerateTestMessage()">
+                    <div class="generate-test-content">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Сгенерировать тест</span>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         {% else %}
             <div class="empty-state">
@@ -111,5 +120,9 @@
             }, 3000);
         });
     });
+    
+    function showGenerateTestMessage() {
+        alert('Функция генерации тестов находится в разработке');
+    }
 </script>
 {% endblock %} 

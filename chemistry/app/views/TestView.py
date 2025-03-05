@@ -54,6 +54,11 @@ class TestDetailView(View):
         
         test = get_object_or_404(Test, id=test_id)
         
+        # Если пользователь учитель, показываем сообщение
+        if is_authenticated and user_info.get('user_type') == 'teacher':
+            messages.warning(request, 'Учителя не могут проходить тесты')
+            return redirect('test_list')
+        
         # Если тест не опубликован и пользователь не учитель
         if not test.is_published and (not is_authenticated or user_info.get('user_type') != 'teacher'):
             messages.error(request, 'Тест недоступен')
@@ -488,6 +493,11 @@ class TestStartView(View):
         if not is_authenticated:
             messages.error(request, 'Необходимо войти в систему')
             return redirect('login_page')
+            
+        # Проверка на учителя
+        if user_info.get('user_type') == 'teacher':
+            messages.warning(request, 'Учителя не могут проходить тесты')
+            return redirect('test_list')
         
         test = get_object_or_404(Test, id=test_id, is_published=True)
         
