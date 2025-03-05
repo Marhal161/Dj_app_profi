@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Удаляем initializeCharts() так как диаграммы больше не нужны
     initializeEventHandlers();
 });
 
@@ -12,12 +11,24 @@ function initializeEventHandlers() {
             
             // Переключаем класс для строки и значок
             this.classList.toggle('active');
-            if (this.classList.contains('active')) {
+            
+            // Проверяем текущее состояние отображения
+            const isVisible = detailsRow.classList.contains('visible');
+            
+            // Сначала скрываем все детали
+            document.querySelectorAll('.student-details-row').forEach(row => {
+                row.classList.remove('visible');
+            });
+            document.querySelectorAll('.toggle-student-details').forEach(btn => {
+                btn.classList.remove('active');
+                btn.innerHTML = '<i class="fas fa-chevron-down"></i>';
+            });
+            
+            // Если строка была скрыта, показываем её
+            if (!isVisible) {
+                detailsRow.classList.add('visible');
+                this.classList.add('active');
                 this.innerHTML = '<i class="fas fa-chevron-up"></i>';
-                detailsRow.style.display = 'table-row'; // Показываем строку
-            } else {
-                this.innerHTML = '<i class="fas fa-chevron-down"></i>';
-                detailsRow.style.display = 'none'; // Скрываем строку
             }
         });
     });
@@ -36,13 +47,14 @@ function initializeEventHandlers() {
                 
                 if (studentName.includes(searchValue)) {
                     row.style.display = '';
-                    if (detailsRow && detailsRow.classList.contains('show')) {
-                        detailsRow.style.display = '';
+                    // Показываем детали только если они были открыты
+                    if (detailsRow && row.querySelector('.toggle-student-details').classList.contains('active')) {
+                        detailsRow.classList.add('visible');
                     }
                 } else {
                     row.style.display = 'none';
                     if (detailsRow) {
-                        detailsRow.style.display = 'none';
+                        detailsRow.classList.remove('visible');
                     }
                 }
             });

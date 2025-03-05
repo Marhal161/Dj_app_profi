@@ -169,17 +169,54 @@ class TestAttempt(models.Model):
         ('archived', 'В архиве'),
     )
     
-    test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='attempts')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='test_attempts', null=True, blank=True)
-    started_at = models.DateTimeField(auto_now_add=True)
-    completed_at = models.DateTimeField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='in_progress')
-    score = models.PositiveIntegerField(default=0)
-    max_score = models.PositiveIntegerField(default=0)
-    
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE,
+        related_name='test_attempts',
+        null=True,
+        blank=True,
+        verbose_name=_('пользователь')
+    )
+    test = models.ForeignKey(
+        Test,
+        on_delete=models.CASCADE,
+        related_name='attempts',
+        verbose_name=_('тест')
+    )
+    started_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('начало теста')
+    )
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_('завершение теста')
+    )
+    score = models.IntegerField(
+        default=0,
+        verbose_name=_('баллы')
+    )
+    max_score = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_('максимальный балл')
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='in_progress',
+        verbose_name=_('статус')
+    )
+
+    class Meta:
+        verbose_name = _('попытка теста')
+        verbose_name_plural = _('попытки тестов')
+        ordering = ['-started_at']
+
     def __str__(self):
-        return f"{self.user.username} - {self.test.title}"
-    
+        user_name = self.user.username if self.user else 'Удаленный пользователь'
+        test_name = self.test.title if self.test else 'Удаленный тест'
+        return f"{user_name} - {test_name}"
+
     def get_percent_score(self):
         if self.max_score == 0:
             return 0

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ title }} | Химия{% endblock %}
 
@@ -193,87 +194,5 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Инициализируем круговые диаграммы для каждого ученика
-        {% for student in students %}
-            const ctx{{ student.id }} = document.getElementById('chart-{{ student.id }}');
-            
-            // Определяем данные для диаграммы
-            const completedTests = {{ student.completed_tests|default:0 }};
-            const awaitingTests = {{ student.awaiting_count|default:0 }};
-            const otherTests = Math.max(0, {{ student.total_tests|default:0 }} - completedTests - awaitingTests);
-            
-            // Создаем диаграмму
-            new Chart(ctx{{ student.id }}, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Завершено', 'На проверке', 'Не начато'],
-                    datasets: [{
-                        data: [completedTests, awaitingTests, otherTests],
-                        backgroundColor: ['#4caf50', '#ff9800', '#e0e0e0'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    },
-                    cutout: '70%'
-                }
-            });
-        {% endfor %}
-        
-        // Обработчик клика по строке ученика
-        const toggleButtons = document.querySelectorAll('.toggle-student-details');
-        toggleButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const studentId = this.getAttribute('data-student-id');
-                const detailsRow = document.getElementById(`details-${studentId}`);
-                
-                // Переключаем класс для строки и значок
-                this.classList.toggle('active');
-                if (this.classList.contains('active')) {
-                    this.innerHTML = '<i class="fas fa-chevron-up"></i>';
-                    detailsRow.classList.add('show');
-                } else {
-                    this.innerHTML = '<i class="fas fa-chevron-down"></i>';
-                    detailsRow.classList.remove('show');
-                }
-            });
-        });
-        
-        // Поиск по таблице учеников
-        const searchInput = document.getElementById('studentSearch');
-        if (searchInput) {
-            searchInput.addEventListener('keyup', function() {
-                const searchValue = this.value.toLowerCase();
-                const rows = document.querySelectorAll('.student-row');
-                
-                rows.forEach(row => {
-                    const studentName = row.querySelector('.student-name').textContent.toLowerCase();
-                    const detailsId = row.getAttribute('data-student-id');
-                    const detailsRow = document.getElementById(`details-${detailsId}`);
-                    
-                    if (studentName.includes(searchValue)) {
-                        row.style.display = '';
-                        if (detailsRow && detailsRow.classList.contains('show')) {
-                            detailsRow.style.display = '';
-                        }
-                    } else {
-                        row.style.display = 'none';
-                        if (detailsRow) {
-                            detailsRow.style.display = 'none';
-                        }
-                    }
-                });
-            });
-        }
-    });
-</script>
+<script src="{% static 'js/teacher_dashboard.js' %}"></script>
 {% endblock %}

@@ -39,7 +39,7 @@ class TeacherDashboardView(View):
             ).values_list('student_id', flat=True)
         ).annotate(
             total_tests=Count('test_attempts__test', distinct=True),
-            completed_tests=Count('test_attempts', 
+            completed_tests=Count('test_attempts__test', 
                 filter=Q(test_attempts__status='reviewed'),
                 distinct=True
             ),
@@ -100,65 +100,85 @@ class StudentDetailView(View):
     
     def get(self, request, student_id, *args, **kwargs):
         user_info = request.user_info
-        is_authenticated = request.is_authenticated
         
-        # Получаем класс учителя
-        teacher_class = Class.objects.filter(teacher_id=user_info['user_id']).first()
-        
-        # Проверяем, что ученик принадлежит классу учителя
+        # Получаем ученика со всей необходимой статистикой
         student = get_object_or_404(
-            User, 
-            id=student_id, 
-            user_type='student',
-            id__in=ClassStudent.objects.filter(
-                class_group=teacher_class
-            ).values_list('student_id', flat=True)
+            User.objects.annotate(
+                total_tests=Count('test_attempts__test', distinct=True),
+                completed_tests=Count(
+                    'test_attempts__test',
+                    filter=Q(test_attempts__status='reviewed'),
+                    distinct=True
+                ),
+                awaiting_tests=Count(
+                    'test_attempts__test',
+                    filter=Q(test_attempts__status='awaiting_review'),
+                    distinct=True
+                ),
+                total_answers=Count(
+                    'test_attempts__answers',
+                    filter=Q(test_attempts__status='reviewed')
+                ),
+                correct_answers_count=Count(
+                    'test_attempts__answers',
+                    filter=Q(
+                        test_attempts__status='reviewed'
+                    ) & (
+                        Q(
+                            test_attempts__answers__question__question_type='part_a',
+                            test_attempts__answers__is_correct=True
+                        ) |
+                        Q(
+                            test_attempts__answers__question__question_type='part_b',
+                            test_attempts__answers__points_awarded=2
+                        )
+                    )
+                ),
+                incorrect_answers_count=Count(
+                    'test_attempts__answers',
+                    filter=Q(
+                        test_attempts__status='reviewed'
+                    ) & (
+                        Q(
+                            test_attempts__answers__question__question_type='part_a',
+                            test_attempts__answers__is_correct=False
+                        ) |
+                        Q(
+                            test_attempts__answers__question__question_type='part_b',
+                            test_attempts__answers__points_awarded=0
+                        )
+                    )
+                )
+            ),
+            id=student_id,
+            user_type='student'
         )
         
-        # Получаем класс ученика
-        student_class = ClassStudent.objects.filter(
-            student=student,
-            class_group=teacher_class
-        ).select_related('class_group').first()
-        
-        # Получаем все попытки прохождения тестов
-        test_attempts = TestAttempt.objects.filter(
-            user=student
-        ).select_related('test').order_by('-started_at')
-        
-        # Группируем тесты по статусам
-        completed_tests = test_attempts.filter(status__in=['completed', 'reviewed'])
-        in_progress_tests = test_attempts.filter(status='in_progress')
-        awaiting_review_tests = test_attempts.filter(status='awaiting_review')
-        
-        # Статистика
-        total_tests = test_attempts.count()
-        completed_count = completed_tests.count()
-        avg_score = completed_tests.aggregate(Avg('score'))['score__avg'] or 0
-        max_score = completed_tests.aggregate(Sum('max_score'))['max_score__sum'] or 0
-        scored_points = completed_tests.aggregate(Sum('score'))['score__sum'] or 0
-        
-        if max_score > 0:
-            total_percent = int((scored_points / max_score) * 100)
-        else:
-            total_percent = 0
-        
+        # Вычисляем количество правильных и неправильных ответов
+        total_answers = student.correct_answers_count + student.incorrect_answers_count
+        correct_answers_percent = (
+            (student.correct_answers_count / total_answers * 100)
+            if total_answers > 0 else 0
+        )
+        incorrect_answers_percent = (
+            (student.incorrect_answers_count / total_answers * 100)
+            if total_answers > 0 else 0
+        )
+
+        # Вычисляем процент выполненных тестов
+        tests_completion = {
+            'completed': student.completed_tests,
+            'awaiting': student.awaiting_tests,
+            'not_started': student.total_tests - student.completed_tests - student.awaiting_tests
+        }
+
         context = {
             'title': f'Ученик: {student.username}',
             'user_info': user_info,
-            'is_authenticated': is_authenticated,
             'student': student,
-            'student_class': student_class,
-            'test_attempts': test_attempts,
-            'completed_tests': completed_tests,
-            'in_progress_tests': in_progress_tests,
-            'awaiting_review_tests': awaiting_review_tests,
-            'total_tests': total_tests,
-            'completed_count': completed_count,
-            'avg_score': avg_score,
-            'total_percent': total_percent,
-            'scored_points': scored_points,
-            'max_score': max_score,
+            'correct_answers_percent': round(correct_answers_percent, 1),
+            'incorrect_answers_percent': round(incorrect_answers_percent, 1),
+            'tests_completion': tests_completion,
             'active_page': 'students'
         }
         
