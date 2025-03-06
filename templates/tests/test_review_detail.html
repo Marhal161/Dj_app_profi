@@ -6,6 +6,36 @@
 {% block extra_css %}
 <link rel="stylesheet" href="/static/css/tests.css">
 <link rel="stylesheet" href="/static/css/teacher_dashboard.css">
+<style>
+    .points-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 5px;
+    }
+
+    .point-btn {
+        padding: 8px 16px;
+        border: 2px solid #ddd;
+        background: white;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.2s;
+        color: #666;
+        transform: scale(1);
+    }
+
+    .point-btn:hover {
+        background: #f0f0f0;
+    }
+
+    .point-btn.active {
+        background: #4CAF50;
+        color: white;
+        border-color: #4CAF50;
+        transform: scale(0.95);
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -117,15 +147,22 @@
                             
                             <div class="review-section">
                                 <div class="form-group">
-                                    <label for="points_{{ answer.id }}">Баллы:</label>
-                                    <input type="number" 
-                                           id="points_{{ answer.id }}" 
-                                           name="points_{{ answer.id }}" 
-                                           min="0"
-                                           max="2"
-                                           class="form-control" 
-                                           value="{{ answer.points_awarded }}"
-                                           required>
+                                    <label>Баллы:</label>
+                                    <div class="points-buttons">
+                                        <button type="button" 
+                                                class="point-btn {% if answer.points_awarded == 0 %}active{% endif %}"
+                                                onclick="selectPoints('{{ answer.id }}', 0)">0</button>
+                                        <button type="button" 
+                                                class="point-btn {% if answer.points_awarded == 1 %}active{% endif %}"
+                                                onclick="selectPoints('{{ answer.id }}', 1)">1</button>
+                                        <button type="button" 
+                                                class="point-btn {% if answer.points_awarded == 2 %}active{% endif %}"
+                                                onclick="selectPoints('{{ answer.id }}', 2)">2</button>
+                                        <input type="hidden" 
+                                               id="points_{{ answer.id }}" 
+                                               name="points_{{ answer.id }}" 
+                                               value="{{ answer.points_awarded }}">
+                                    </div>
                                 </div>
                                 
                                 <div class="form-group">
@@ -216,5 +253,28 @@
             }
         });
     });
+
+    function selectPoints(answerId, points) {
+        // Находим кнопку, по которой кликнули
+        const clickedBtn = document.querySelector(`button[onclick="selectPoints('${answerId}', ${points})"]`);
+        
+        // Если кнопка уже активна - деактивируем её и выходим
+        if (clickedBtn.classList.contains('active')) {
+            clickedBtn.classList.remove('active');
+            // Устанавливаем значение 0 вместо пустой строки
+            document.getElementById(`points_${answerId}`).value = '0';
+            return;
+        }
+        
+        // Находим все кнопки для данного ответа
+        const buttons = document.querySelectorAll(`button[onclick*="selectPoints('${answerId}')"]`);
+        
+        // Убираем активный класс со всех кнопок
+        buttons.forEach(btn => btn.classList.remove('active'));
+        
+        // Делаем кликнутую кнопку активной
+        clickedBtn.classList.add('active');
+        document.getElementById(`points_${answerId}`).value = points;
+    }
 </script>
 {% endblock %} 

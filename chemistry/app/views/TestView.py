@@ -131,12 +131,18 @@ class TestDetailView(View):
 class TestTakeView(View):
     template_name = 'tests/test_take.html'
     
+    @method_decorator(check_auth_tokens)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
     
     def get(self, request, test_id, attempt_id, *args, **kwargs):
         user_info = getattr(request, 'user_info', None)
-        is_authenticated = user_info is not None
+        is_authenticated = hasattr(request, 'is_authenticated') and request.is_authenticated
+        
+        # Проверяем авторизацию
+        if not is_authenticated and user_info is None:
+            messages.error(request, 'Необходимо войти в систему')
+            return redirect('login_page')
         
         test = get_object_or_404(Test, id=test_id, is_published=True)
         attempt = get_object_or_404(
@@ -146,6 +152,11 @@ class TestTakeView(View):
             status='in_progress'
         )
         
+        # Проверяем, что попытка принадлежит текущему пользователю
+        if is_authenticated and attempt.user_id != user_info['user_id']:
+            messages.error(request, 'У вас нет доступа к этой попытке')
+            return redirect('test_list')
+            
         # Для неавторизованных пользователей показываем только часть A
         if not is_authenticated:
             questions = test.questions.filter(question_type='part_a').order_by('order', 'id')
@@ -254,12 +265,18 @@ class TestTakeView(View):
 class TestResultView(View):
     template_name = 'tests/test_result.html'
     
+    @method_decorator(check_auth_tokens)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
     
     def get(self, request, test_id, attempt_id, *args, **kwargs):
         user_info = getattr(request, 'user_info', None)
-        is_authenticated = user_info is not None
+        is_authenticated = hasattr(request, 'is_authenticated') and request.is_authenticated
+        
+        # Проверяем авторизацию
+        if not is_authenticated and user_info is None:
+            messages.error(request, 'Необходимо войти в систему')
+            return redirect('login_page')
         
         test = get_object_or_404(Test, id=test_id)
         attempt = get_object_or_404(
@@ -267,6 +284,11 @@ class TestResultView(View):
             id=attempt_id, 
             test=test
         )
+        
+        # Проверяем, что попытка принадлежит текущему пользователю
+        if is_authenticated and attempt.user_id != user_info['user_id']:
+            messages.error(request, 'У вас нет доступа к этим результатам')
+            return redirect('test_list')
         
         # Если тест еще не завершен, перенаправляем
         if attempt.status == 'in_progress':
