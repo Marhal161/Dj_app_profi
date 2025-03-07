@@ -49,8 +49,8 @@ class TestDetailView(View):
         return super().dispatch(request, *args, **kwargs)
     
     def get(self, request, test_id, *args, **kwargs):
-        is_authenticated = request.is_authenticated
-        user_info = request.user_info if is_authenticated else None
+        user_info = request.user_info
+        is_authenticated = hasattr(request, 'user_info') and request.user_info is not None
         
         test = get_object_or_404(Test, id=test_id)
         
@@ -68,6 +68,14 @@ class TestDetailView(View):
         attempt = None
         if is_authenticated:
             attempt = TestAttempt.objects.filter(user_id=user_info['user_id'], test=test).first()
+        else:
+            # Для неавторизованных проверяем сессию
+            session_attempt = request.session.get('temp_attempt', {})
+            if session_attempt and str(session_attempt.get('test_id')) == str(test_id):
+                attempt = type('TempAttempt', (), {
+                    'status': session_attempt.get('status', 'in_progress'),
+                    'started_at': session_attempt.get('started_at')
+                })
         
         context = {
             'title': test.title,
@@ -80,51 +88,54 @@ class TestDetailView(View):
     
     def post(self, request, test_id, *args, **kwargs):
         user_info = getattr(request, 'user_info', None)
-        is_authenticated = user_info is not None
+        is_authenticated = getattr(request, 'is_authenticated', False)
         
         test = get_object_or_404(Test, id=test_id, is_published=True)
         
         # Начать новую попытку
         if 'start_test' in request.POST:
-            if not is_authenticated:
-                # Для неавторизованных пользователей создаем временную попытку
-                questions = test.questions.filter(question_type='part_a')
-                max_score = questions.aggregate(total=Sum('points'))['total'] or 0
-                
-                attempt = TestAttempt.objects.create(
+            if is_authenticated:
+                # Для авторизованных пользователей - обычная логика с БД
+                existing_attempt = TestAttempt.objects.filter(
+                    user_id=user_info['user_id'], 
                     test=test,
-                    user=None,  # Явно указываем, что пользователя нет
+                    status__in=['completed', 'awaiting_review', 'reviewed']
+                ).first()
+                
+                if existing_attempt:
+                    messages.error(request, 'Вы уже прошли этот тест')
+                    return redirect('test_detail', test_id=test_id)
+                
+                # Удаляем незавершенные попытки
+                TestAttempt.objects.filter(
+                    user_id=user_info['user_id'], 
+                    test=test, 
+                    status='in_progress'
+                ).delete()
+                
+                # Создаем новую попытку
+                max_score = test.questions.all().aggregate(total=Sum('points'))['total'] or 0
+                attempt = TestAttempt.objects.create(
+                    user_id=user_info['user_id'],
+                    test=test,
                     max_score=max_score,
                     status='in_progress'
                 )
+                
                 return redirect('test_take', test_id=test_id, attempt_id=attempt.id)
-            
-            # Для авторизованных пользователей - обычная логика
-            existing_attempt = TestAttempt.objects.filter(
-                user_id=user_info['user_id'], 
-                test=test,
-                status__in=['completed', 'awaiting_review', 'reviewed']
-            ).first()
-            
-            if existing_attempt:
-                messages.error(request, 'Вы уже прошли этот тест')
-                return redirect('test_detail', test_id=test_id)
-            
-            # Удаляем незавершенные попытки
-            TestAttempt.objects.filter(user_id=user_info['user_id'], test=test, status='in_progress').delete()
-            
-            # Создаем новую попытку
-            questions = test.questions.all()
-            max_score = questions.aggregate(total=Sum('points'))['total'] or 0
-            
-            attempt = TestAttempt.objects.create(
-                user_id=user_info['user_id'],
-                test=test,
-                max_score=max_score,
-                status='in_progress'
-            )
-            
-            return redirect('test_take', test_id=test_id, attempt_id=attempt.id)
+            else:
+                # Для неавторизованных - создаем временную попытку в сессии
+                session_attempt = {
+                    'test_id': test_id,
+                    'started_at': timezone.now().isoformat(),
+                    'status': 'in_progress',
+                    'answers': {},
+                    'max_score': test.questions.filter(
+                        question_type='part_a'
+                    ).aggregate(total=Sum('points'))['total'] or 0
+                }
+                request.session['temp_attempt'] = session_attempt
+                return redirect('test_take', test_id=test_id, attempt_id=0)
         
         return redirect('test_detail', test_id=test_id)
 
@@ -136,131 +147,134 @@ class TestTakeView(View):
         return super().dispatch(request, *args, **kwargs)
     
     def get(self, request, test_id, attempt_id, *args, **kwargs):
-        user_info = getattr(request, 'user_info', None)
-        is_authenticated = hasattr(request, 'is_authenticated') and request.is_authenticated
-        
-        # Проверяем авторизацию
-        if not is_authenticated and user_info is None:
-            messages.error(request, 'Необходимо войти в систему')
-            return redirect('login_page')
+        user_info = request.user_info
+        is_authenticated = hasattr(request, 'user_info') and request.user_info is not None
         
         test = get_object_or_404(Test, id=test_id, is_published=True)
-        attempt = get_object_or_404(
-            TestAttempt, 
-            id=attempt_id, 
-            test=test, 
-            status='in_progress'
-        )
         
-        # Проверяем, что попытка принадлежит текущему пользователю
-        if is_authenticated and attempt.user_id != user_info['user_id']:
-            messages.error(request, 'У вас нет доступа к этой попытке')
-            return redirect('test_list')
+        if is_authenticated:
+            # Для авторизованных - обычная логика с БД
+            attempt = get_object_or_404(TestAttempt, id=attempt_id, test=test)
             
-        # Для неавторизованных пользователей показываем только часть A
-        if not is_authenticated:
-            questions = test.questions.filter(question_type='part_a').order_by('order', 'id')
+            # Проверяем, что попытка принадлежит текущему пользователю
+            if attempt.user_id != user_info['user_id']:
+                messages.error(request, 'У вас нет доступа к этой попытке')
+                return redirect('test_list')
+            
+            # Получаем все вопросы для авторизованного пользователя
+            questions = TestQuestion.objects.filter(test=test).order_by('order')
+            
+            # Получаем уже данные ответы
+            answers = TestAnswer.objects.filter(attempt=attempt)
+            answered_questions = {answer.question_id: answer for answer in answers}
         else:
-            questions = test.questions.all().order_by('order', 'id')
-        
-        # Получаем уже сохраненные ответы
-        saved_answers = {}
-        for answer in TestAnswer.objects.filter(attempt=attempt):
-            saved_answers[answer.question_id] = answer.answer_text
+            # Для неавторизованных - берем данные из сессии
+            session_attempt = request.session.get('temp_attempt', {})
+            if not session_attempt or str(session_attempt.get('test_id')) != str(test_id):
+                messages.error(request, 'Попытка не найдена')
+                return redirect('test_list')
+            
+            # Получаем только вопросы части A
+            questions = TestQuestion.objects.filter(test=test, question_type='part_a').order_by('order')
+            answered_questions = session_attempt.get('answers', {})
+            attempt = type('TempAttempt', (), {
+                'id': 0,
+                'status': session_attempt.get('status', 'in_progress'),
+                'max_score': session_attempt.get('max_score', 0)
+            })()
         
         context = {
-            'title': f'Прохождение теста: {test.title}',
+            'title': test.title,
             'test': test,
             'attempt': attempt,
             'questions': questions,
-            'saved_answers': saved_answers,
+            'answered_questions': answered_questions,
             'user_info': user_info,
             'is_authenticated': is_authenticated,
         }
+        
         return render(request, self.template_name, context)
     
     def post(self, request, test_id, attempt_id, *args, **kwargs):
         user_info = getattr(request, 'user_info', None)
-        is_authenticated = user_info is not None
+        is_authenticated = user_info is not None and 'user_id' in user_info
         
         test = get_object_or_404(Test, id=test_id, is_published=True)
-        attempt = get_object_or_404(TestAttempt, id=attempt_id, test=test)
         
-        # Проверяем, что отправка теста, а не промежуточное сохранение
-        if 'submit_test' in request.POST:
-            # Для неавторизованных пользователей берем только вопросы части A
-            if not is_authenticated:
-                questions = TestQuestion.objects.filter(test=test, question_type='part_a')
-            else:
-                questions = TestQuestion.objects.filter(test=test)
+        if is_authenticated:
+            # Для авторизованных - обычная логика с БД
+            attempt = get_object_or_404(TestAttempt, id=attempt_id, test=test)
             
-            # Базовый балл
+            # Проверяем, что попытка принадлежит текущему пользователю
+            if attempt.user_id != user_info['user_id']:
+                messages.error(request, 'У вас нет доступа к этой попытке')
+                return redirect('test_list')
+            
+            # Если тест уже завершен, перенаправляем на результаты
+            if attempt.status != 'in_progress':
+                return redirect('test_result', test_id=test_id, attempt_id=attempt_id)
+            
+            # Обработка ответов для авторизованных пользователей
             score = 0
-            # Флаг наличия вопросов части B
-            has_part_b = False
-            
-            # Обрабатываем ответы
-            for question in questions:
-                # Сначала сохраняем все ответы
-                if f'answer_{question.id}' in request.POST:
-                    answer_text = request.POST.get(f'answer_{question.id}')
-                    # Проверяем существует ли уже ответ
-                    answer, created = TestAnswer.objects.get_or_create(
+            for question in TestQuestion.objects.filter(test=test):
+                answer_text = request.POST.get(f'answer_{question.id}', '').strip()
+                if answer_text:
+                    answer, created = TestAnswer.objects.update_or_create(
                         attempt=attempt,
                         question=question,
                         defaults={'answer_text': answer_text}
                     )
-                    # Если ответ уже существовал, обновляем его
-                    if not created:
-                        answer.answer_text = answer_text
-                        answer.save()
                     
-                    # Проверяем тип вопроса
                     if question.question_type == 'part_a':
-                        # Автоматическая проверка для части A
-                        if answer.answer_text.strip().lower() == question.answer.strip().lower():
-                            answer.is_correct = True
-                            answer.points_awarded = question.points
-                            score += question.points
-                        else:
-                            answer.is_correct = False
-                            answer.points_awarded = 0
-                        answer.save()
-                    elif question.question_type == 'long_answer' or question.question_type == 'part_b':
-                        # Для части B отмечаем, что требуется проверка
-                        has_part_b = True
+                        is_correct = answer_text.lower() == question.answer.lower()
+                        answer.is_correct = is_correct
+                        answer.points_awarded = question.points if is_correct else 0
+                        score += answer.points_awarded
+                    answer.save()
             
             # Обновляем статус попытки
             attempt.score = score
+            attempt.status = 'awaiting_review'
             attempt.completed_at = timezone.now()
-            
-            if has_part_b and is_authenticated:
-                attempt.status = 'awaiting_review'
-            else:
-                attempt.status = 'completed'
-            
             attempt.save()
             
-            messages.success(request, 'Тест успешно завершен')
-            return redirect('test_result', test_id=test_id, attempt_id=attempt.id)
-        # Обработка промежуточного сохранения (можно убрать)
+            return redirect('test_result', test_id=test_id, attempt_id=attempt_id)
         else:
-            # Сохраняем ответы без завершения теста
-            questions = TestQuestion.objects.filter(test=test)
-            for question in questions:
-                if f'answer_{question.id}' in request.POST:
-                    answer_text = request.POST.get(f'answer_{question.id}')
-                    answer, created = TestAnswer.objects.get_or_create(
-                        attempt=attempt,
-                        question=question,
-                        defaults={'answer_text': answer_text}
-                    )
-                    if not created:
-                        answer.answer_text = answer_text
-                        answer.save()
+            # Для неавторизованных - обрабатываем в сессии
+            session_attempt = request.session.get('temp_attempt', {})
+            if not session_attempt or session_attempt.get('test_id') != test_id:
+                return redirect('test_list')
             
-            messages.success(request, 'Ответы сохранены')
-            return redirect('test_take', test_id=test_id, attempt_id=attempt_id)
+            questions = TestQuestion.objects.filter(test=test, question_type='part_a')
+            answers = {}
+            score = 0
+            
+            for question in questions:
+                answer_text = request.POST.get(f'answer_{question.id}', '').strip()
+                if answer_text:
+                    is_correct = answer_text.lower() == question.answer.lower()
+                    points = question.points if is_correct else 0
+                    score += points
+                    
+                    answers[str(question.id)] = {
+                        'answer_text': answer_text,
+                        'is_correct': is_correct,
+                        'points_awarded': points,
+                        'question_text': question.question_text,
+                        'correct_answer': question.answer,
+                        'max_points': question.points
+                    }
+            
+            session_attempt.update({
+                'status': 'reviewed',
+                'completed_at': timezone.now().isoformat(),
+                'answers': answers,
+                'score': score
+            })
+            
+            request.session['temp_attempt'] = session_attempt
+            
+            return redirect('test_result', test_id=test_id, attempt_id=0)
 
 class TestResultView(View):
     template_name = 'tests/test_result.html'
@@ -270,47 +284,81 @@ class TestResultView(View):
         return super().dispatch(request, *args, **kwargs)
     
     def get(self, request, test_id, attempt_id, *args, **kwargs):
-        user_info = getattr(request, 'user_info', None)
-        is_authenticated = hasattr(request, 'is_authenticated') and request.is_authenticated
+        user_info = request.user_info
+        is_authenticated = hasattr(request, 'user_info') and request.user_info is not None
         
-        # Проверяем авторизацию
-        if not is_authenticated and user_info is None:
-            messages.error(request, 'Необходимо войти в систему')
-            return redirect('login_page')
+        test = get_object_or_404(Test, id=test_id, is_published=True)
         
-        test = get_object_or_404(Test, id=test_id)
-        attempt = get_object_or_404(
-            TestAttempt, 
-            id=attempt_id, 
-            test=test
-        )
+        if is_authenticated:
+            # Для авторизованных - обычная логика с БД
+            attempt = get_object_or_404(TestAttempt, id=attempt_id, test=test)
+            answers = TestAnswer.objects.filter(attempt=attempt).select_related('question').order_by('question__order')
+            
+            # Разделяем ответы по типам вопросов
+            answers_part_a = [a for a in answers if a.question.question_type == 'part_a']
+            answers_part_b = [a for a in answers if a.question.question_type in ['part_b', 'long_answer']]
+            
+            # Считаем статистику
+            total_score = attempt.score
+            max_score = attempt.max_score
+            
+            # Вычисляем процент
+            percentage = (total_score / max_score * 100) if max_score > 0 else 0
+            
+            context = {
+                'title': f'Результаты теста: {test.title}',
+                'test': test,
+                'attempt': attempt,
+                'answers_part_a': answers_part_a,
+                'answers_part_b': answers_part_b,
+                'total_score': total_score,
+                'max_score': max_score,
+                'percentage': round(percentage, 1),
+                'user_info': user_info,
+                'is_authenticated': is_authenticated,
+            }
+        else:
+            # Для неавторизованных - берем данные из сессии
+            session_attempt = request.session.get('temp_attempt', {})
+            if not session_attempt or session_attempt.get('test_id') != test_id:
+                return redirect('test_list')
+            
+            # Создаем временные объекты для шаблона
+            answers_part_a = []
+            for q_id, answer_data in session_attempt.get('answers', {}).items():
+                answer = type('TempAnswer', (), {
+                    'question': type('TempQuestion', (), {
+                        'text': answer_data['question_text'],
+                        'answer': answer_data['correct_answer'],
+                        'points': answer_data['max_points']
+                    })(),
+                    'answer_text': answer_data['answer_text'],
+                    'is_correct': answer_data['is_correct'],
+                    'points_awarded': answer_data['points_awarded']
+                })()
+                answers_part_a.append(answer)
+            
+            context = {
+                'title': f'Результаты теста: {test.title}',
+                'test': test,
+                'attempt': type('TempAttempt', (), {
+                    'status': session_attempt.get('status', 'reviewed'),
+                    'score': session_attempt.get('score', 0),
+                    'max_score': session_attempt.get('max_score', 0)
+                })(),
+                'answers_part_a': answers_part_a,
+                'answers_part_b': [],
+                'total_score': session_attempt.get('score', 0),
+                'max_score': session_attempt.get('max_score', 0),
+                'percentage': round(session_attempt.get('score', 0) / session_attempt.get('max_score', 1) * 100, 1),
+                'user_info': user_info,
+                'is_authenticated': is_authenticated,
+            }
+            
+            # Очищаем временную попытку из сессии
+            if 'temp_attempt' in request.session:
+                del request.session['temp_attempt']
         
-        # Проверяем, что попытка принадлежит текущему пользователю
-        if is_authenticated and attempt.user_id != user_info['user_id']:
-            messages.error(request, 'У вас нет доступа к этим результатам')
-            return redirect('test_list')
-        
-        # Если тест еще не завершен, перенаправляем
-        if attempt.status == 'in_progress':
-            return redirect('test_take', test_id=test_id, attempt_id=attempt_id)
-        
-        # Получаем все ответы
-        all_answers = TestAnswer.objects.filter(attempt=attempt).select_related('question')
-        
-        # Разделяем ответы по типам вопросов
-        answers_part_a = all_answers.filter(question__question_type='part_a')
-        answers_part_b = all_answers.filter(question__question_type__in=['part_b', 'long_answer'])
-        
-        context = {
-            'title': f'Результаты теста: {test.title}',
-            'test': test,
-            'attempt': attempt,
-            'answers': all_answers,
-            'answers_part_a': answers_part_a,
-            'answers_part_b': answers_part_b,
-            'user_info': user_info,
-            'is_authenticated': is_authenticated,
-        }
         return render(request, self.template_name, context)
 
 class TestReviewView(View):
@@ -510,29 +558,27 @@ class TestStartView(View):
     
     def get(self, request, test_id, *args, **kwargs):
         user_info = request.user_info
-        is_authenticated = request.is_authenticated
-        
-        if not is_authenticated:
-            messages.error(request, 'Необходимо войти в систему')
-            return redirect('login_page')
-            
-        # Проверка на учителя
-        if user_info.get('user_type') == 'teacher':
-            messages.warning(request, 'Учителя не могут проходить тесты')
-            return redirect('test_list')
+        is_authenticated = hasattr(request, 'user_info') and request.user_info is not None
         
         test = get_object_or_404(Test, id=test_id, is_published=True)
         
-        # Проверяем только незавершенные попытки
-        existing_attempt = TestAttempt.objects.filter(
-            test=test,
-            user_id=user_info['user_id'],
-            status='in_progress'
-        ).first()
-        
-        if existing_attempt:
-            # Если есть незавершенная попытка, перенаправляем на неё
-            return redirect('test_take', test_id=test_id, attempt_id=existing_attempt.id)
+        # Если пользователь авторизован
+        if is_authenticated:
+            # Проверка на учителя
+            if user_info.get('user_type') == 'teacher':
+                messages.warning(request, 'Учителя не могут проходить тесты')
+                return redirect('test_list')
+                
+            # Проверяем только незавершенные попытки
+            existing_attempt = TestAttempt.objects.filter(
+                test=test,
+                user_id=user_info['user_id'],
+                status='in_progress'
+            ).first()
+            
+            if existing_attempt:
+                # Если есть незавершенная попытка, перенаправляем на неё
+                return redirect('test_take', test_id=test_id, attempt_id=existing_attempt.id)
         
         context = {
             'title': f'Начать тест: {test.title}',
@@ -543,38 +589,52 @@ class TestStartView(View):
         return render(request, self.template_name, context)
     
     def post(self, request, test_id, *args, **kwargs):
-        user_info = request.user_info
-        is_authenticated = request.is_authenticated
-        
-        if not is_authenticated:
-            messages.error(request, 'Необходимо войти в систему')
-            return redirect('login_page')
+        user_info = getattr(request, 'user_info', None)
+        is_authenticated = getattr(request, 'is_authenticated', False)
         
         test = get_object_or_404(Test, id=test_id, is_published=True)
         
-        # Проверяем только незавершенные попытки
-        existing_attempt = TestAttempt.objects.filter(
-            test=test,
-            user_id=user_info['user_id'],
-            status='in_progress'
-        ).first()
-        
-        if existing_attempt:
-            # Если есть незавершенная попытка, перенаправляем на неё
-            return redirect('test_take', test_id=test_id, attempt_id=existing_attempt.id)
-        
-        # Вычисляем максимальное количество баллов за тест
-        max_score = TestQuestion.objects.filter(test=test).aggregate(
-            total=Sum('points'))['total'] or 0
-        
-        # Создаем новую попытку теста
-        attempt = TestAttempt.objects.create(
-            test=test,
-            user_id=user_info['user_id'],  # Django автоматически обработает это
-            status='in_progress',
-            started_at=timezone.now(),
-            max_score=max_score
-        )
-        
-        messages.success(request, 'Тест начат')
-        return redirect('test_take', test_id=test_id, attempt_id=attempt.id) 
+        # Для авторизованных пользователей - обычная логика с БД
+        if is_authenticated:
+            # Проверяем только незавершенные попытки
+            existing_attempt = TestAttempt.objects.filter(
+                test=test,
+                user_id=user_info['user_id'],
+                status='in_progress'
+            ).first()
+            
+            if existing_attempt:
+                return redirect('test_take', test_id=test_id, attempt_id=existing_attempt.id)
+            
+            # Вычисляем максимальное количество баллов за тест
+            max_score = TestQuestion.objects.filter(test=test).aggregate(
+                total=Sum('points'))['total'] or 0
+            
+            # Создаем новую попытку теста
+            attempt = TestAttempt.objects.create(
+                test=test,
+                user_id=user_info['user_id'],
+                status='in_progress',
+                started_at=timezone.now(),
+                max_score=max_score
+            )
+            return redirect('test_take', test_id=test_id, attempt_id=attempt.id)
+            
+        # Для неавторизованных пользователей - используем сессию
+        else:
+            # Создаем временную попытку в сессии
+            session_attempt = {
+                'test_id': test_id,
+                'started_at': timezone.now().isoformat(),
+                'status': 'in_progress',
+                'answers': {},
+                'max_score': TestQuestion.objects.filter(
+                    test=test,
+                    question_type='part_a'
+                ).aggregate(total=Sum('points'))['total'] or 0
+            }
+            
+            # Сохраняем в сессии
+            request.session['temp_attempt'] = session_attempt
+            
+            return redirect('test_take', test_id=test_id, attempt_id=0)  # используем attempt_id=0 для временной попытки 

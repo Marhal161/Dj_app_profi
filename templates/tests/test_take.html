@@ -24,6 +24,13 @@
         <p>Прохождение теста</p>
     </div>
 
+    {% if not is_authenticated %}
+        <div class="alert alert-warning">
+            Вы не авторизованы. Вы можете пройти только часть A теста. 
+            Для прохождения полного теста, пожалуйста, <a href="{% url 'login_page' %}">войдите в систему</a>.
+        </div>
+    {% endif %}
+
     <form method="POST" action="{% url 'test_take' test.id attempt.id %}" id="testForm">
         {% csrf_token %}
         
