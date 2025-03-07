@@ -22,18 +22,16 @@
         font-weight: bold;
         transition: all 0.2s;
         color: #666;
-        transform: scale(1);
     }
 
     .point-btn:hover {
-        background: #f0f0f0;
+        border-color: #4CAF50;
     }
 
     .point-btn.active {
+        border-color: #4CAF50;
         background: #4CAF50;
         color: white;
-        border-color: #4CAF50;
-        transform: scale(0.95);
     }
 </style>
 {% endblock %}
@@ -148,7 +146,7 @@
                             <div class="review-section">
                                 <div class="form-group">
                                     <label>Баллы:</label>
-                                    <div class="points-buttons">
+                                    <div class="points-buttons" data-answer-id="{{ answer.id }}">
                                         <button type="button" 
                                                 class="point-btn {% if answer.points_awarded == 0 %}active{% endif %}"
                                                 onclick="selectPoints('{{ answer.id }}', 0)">0</button>
@@ -252,28 +250,55 @@
                 }
             }
         });
+
+        // Инициализация активных кнопок
+        document.querySelectorAll('[id^="points_"]').forEach(input => {
+            const answerId = input.id.replace('points_', '');
+            const points = input.value;
+            
+            // Находим контейнер кнопок
+            const buttonContainer = document.querySelector(`.points-buttons[data-answer-id="${answerId}"]`);
+            if (!buttonContainer) return;
+            
+            // Находим все кнопки в контейнере
+            const buttons = buttonContainer.querySelectorAll('.point-btn');
+            
+            // Сначала убираем active со всех кнопок
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Активируем нужную кнопку
+            if (points !== '') {
+                const activeBtn = buttonContainer.querySelector(`.point-btn:nth-child(${parseInt(points) + 1})`);
+                if (activeBtn) {
+                    activeBtn.classList.add('active');
+                }
+            }
+        });
     });
 
     function selectPoints(answerId, points) {
-        // Находим кнопку, по которой кликнули
-        const clickedBtn = document.querySelector(`button[onclick="selectPoints('${answerId}', ${points})"]`);
+        // Находим контейнер кнопок для этого ответа
+        const buttonContainer = document.querySelector(`.points-buttons[data-answer-id="${answerId}"]`);
         
-        // Если кнопка уже активна - деактивируем её и выходим
-        if (clickedBtn.classList.contains('active')) {
-            clickedBtn.classList.remove('active');
-            // Устанавливаем значение 0 вместо пустой строки
-            document.getElementById(`points_${answerId}`).value = '0';
-            return;
+        if (!buttonContainer) return;
+        
+        // Находим все кнопки внутри этого контейнера
+        const buttons = buttonContainer.querySelectorAll('.point-btn');
+        
+        // Убираем активный класс со всех кнопок в этом контейнере
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Находим и активируем нажатую кнопку
+        const clickedBtn = buttonContainer.querySelector(`.point-btn:nth-child(${parseInt(points) + 1})`);
+        if (clickedBtn) {
+            clickedBtn.classList.add('active');
         }
         
-        // Находим все кнопки для данного ответа
-        const buttons = document.querySelectorAll(`button[onclick*="selectPoints('${answerId}')"]`);
-        
-        // Убираем активный класс со всех кнопок
-        buttons.forEach(btn => btn.classList.remove('active'));
-        
-        // Делаем кликнутую кнопку активной
-        clickedBtn.classList.add('active');
+        // Обновляем значение в скрытом поле
         document.getElementById(`points_${answerId}`).value = points;
     }
 </script>
