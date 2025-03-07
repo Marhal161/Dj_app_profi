@@ -59,16 +59,28 @@
                 </div>
                 {% endwith %}
             </div>
-            {% if is_authenticated and user_info.user_type == 'student' %}
             <div class="teacher-actions">
-                <button class="join-class-btn" 
-                        data-teacher-id="{{ teacher.id }}"
-                        onclick="sendJoinRequest(this)">
-                    <i class="fas fa-user-plus"></i>
-                    Подать заявку
-                </button>
+                {% if is_authenticated and user_info.user_type == 'student' %}
+                    {% if user_info.has_class %}
+                        <button class="join-class-btn" disabled>
+                            <i class="fas fa-users"></i>
+                            Вы уже в классе
+                        </button>
+                    {% else %}
+                        <button class="join-class-btn" 
+                                data-teacher-id="{{ teacher.id }}"
+                                onclick="sendJoinRequest(this)"
+                                {% if teacher.has_pending_request %}disabled{% endif %}>
+                            <i class="fas fa-user-plus"></i>
+                            {% if teacher.has_pending_request %}
+                                Заявка отправлена
+                            {% else %}
+                                Подать заявку
+                            {% endif %}
+                        </button>
+                    {% endif %}
+                {% endif %}
             </div>
-            {% endif %}
         </div>
         {% empty %}
         <div class="no-teachers">

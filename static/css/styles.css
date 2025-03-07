@@ -405,7 +405,7 @@ header.scrolled {
 }
 
 .logo {
-  font-size: 2.8rem;
+  font-size: 2.4rem;
   font-weight: 800;
   font-family: var(--font-heading);
   background: linear-gradient(135deg, var(--primary-light), var(--accent-color));
@@ -441,6 +441,7 @@ nav {
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  padding: 0 1rem;
 }
 
 .nav-links {
@@ -449,104 +450,127 @@ nav {
   align-items: center;
   margin: 0;
   padding: 0;
-  gap: 2rem;
-}
-
-.nav-links li {
-  margin-left: 3rem;
+  gap: 1rem;
 }
 
 .nav-links li a {
   font-weight: 500;
   position: relative;
   color: var(--text-light);
-  padding: 0.8rem 1.5rem;
+  padding: 0.6rem 1.2rem;
   border-radius: var(--radius-full);
   transition: all 0.3s ease;
   text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.6rem;
+  font-size: 1.4rem;
+  white-space: nowrap;
 }
 
-.nav-links li a i {
-  font-size: 1.6rem;
-  transition: transform 0.3s ease;
+/* Стили для пользовательского меню */
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.nav-links li a:hover {
-  color: var(--primary-light);
-  background: rgba(123, 44, 191, 0.1);
+.profile-link {
+  padding: 0.6rem 1.2rem;
 }
 
-.nav-links li a:hover i {
-  transform: translateY(-2px);
+.logout-link {
+  padding: 0.6rem !important;
+  color: var(--text-light) !important;
 }
 
-.nav-links li a.active {
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-  color: white;
+.logout-link:hover {
+  color: var(--accent-color) !important;
 }
 
-.mobile-menu-btn {
-  display: none;
-  background: rgba(123, 44, 191, 0.1);
-  border: 1px solid rgba(123, 44, 191, 0.2);
-  border-radius: var(--radius-full);
-  padding: 0.8rem;
-  cursor: pointer;
-  color: var(--text-light);
-  transition: all 0.3s ease;
+.username {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.mobile-menu-btn:hover {
-  background: rgba(123, 44, 191, 0.2);
-  color: var(--primary-light);
-}
-
-/* Адаптивная навигация */
-@media (max-width: 992px) {
-  .mobile-menu-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* Обновленные медиа-запросы */
+@media (max-width: 1200px) {
+  .nav-links li a {
+    padding: 0.5rem 1rem;
+    font-size: 1.3rem;
   }
   
+  .nav-links {
+    gap: 0.5rem;
+  }
+  
+  .username {
+    max-width: 100px;
+  }
+}
+
+@media (max-width: 992px) {
   .nav-links {
     position: fixed;
     top: var(--header-height);
     left: 0;
     width: 100%;
     height: calc(100vh - var(--header-height));
-    background: rgba(19, 17, 27, 0.98);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: var(--bg-dark);
     flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding-top: 4rem;
+    padding: 2rem;
     transform: translateX(100%);
     transition: transform 0.3s ease-in-out;
-    gap: 2rem;
+    gap: 1rem;
+    z-index: 1000;
   }
-  
+
   .nav-links.active {
     transform: translateX(0);
   }
-  
+
   .nav-links li a {
-    font-size: 1.8rem;
-    padding: 1.2rem 2.4rem;
+    width: 100%;
+    justify-content: center;
+    padding: 1rem;
+    font-size: 1.6rem;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+  }
+
+  .username {
+    max-width: none;
   }
 }
 
-@media (max-width: 768px) {
+/* Стили для кнопки мобильного меню */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 2.4rem;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+/* Обновляем стили для логотипа */
+.logo {
+  font-size: 2.4rem;
+  padding: 0.5rem 0;
+}
+
+@media (max-width: 576px) {
   .logo {
-    font-size: 2.2rem;
+    font-size: 2rem;
   }
   
   .nav-links li a {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
   }
 }
 

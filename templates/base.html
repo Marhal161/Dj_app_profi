@@ -24,27 +24,26 @@
                     <li><a href="/app/"><i class="fas fa-home"></i> Главная</a></li>
                     <li><a href="/app/articles/"><i class="fas fa-file-alt"></i> Статьи</a></li>
                     <li><a href="/app/tests/"><i class="fas fa-vial"></i> Тесты</a></li>
-                    <li><a href="{% url 'teacher_ratings' %}"><i class="fas fa-trophy"></i> Рейтинг учителей</a></li>
+                    <li><a href="{% url 'teacher_ratings' %}"><i class="fas fa-trophy"></i> Рейтинг</a></li>
                     {% if is_authenticated %}
                         <li><a href="/app/materials/"><i class="fas fa-book"></i> Материалы</a></li>
                         {% if user_info.user_type == 'teacher' %}
-                            <li><a href="{% url 'teacher_dashboard' %}" {% if active_page == 'dashboard' %}class="active"{% endif %}>Панель учителя</a></li>
-                            <li><a href="{% url 'class' %}"><i class="fas fa-users"></i> Мой класс</a></li>
+                            <li><a href="{% url 'teacher_dashboard' %}" {% if active_page == 'dashboard' %}class="active"{% endif %}><i class="fas fa-chalkboard-teacher"></i> Панель</a></li>
+                            <li><a href="{% url 'class' %}"><i class="fas fa-users"></i> Класс</a></li>
                         {% elif user_info.user_type == 'student' %}
-                            <li><a href="{% url 'class' %}"><i class="fas fa-users"></i> Мой класс</a></li>
+                            <li><a href="{% url 'class' %}"><i class="fas fa-users"></i> Класс</a></li>
                         {% endif %}
-                        <li>
-                            <div class="user-menu">
+                        <li class="user-menu-item">
+                            <a href="{% url 'profile' %}" class="profile-link {% if active_page == 'profile' %}active{% endif %}">
+                                <i class="fas fa-user"></i>
                                 <span class="username">{{ user_info.username }}</span>
-                                <a href="{% url 'logout_api' %}" class="nav-link">Выйти</a>
-                            </div>
+                            </a>
+                            <a href="{% url 'logout_api' %}" class="logout-link">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </a>
                         </li>
-                        <li><a href="{% url 'profile' %}" class="profile-link {% if active_page == 'profile' %}active{% endif %}">
-                            <i class="fas fa-user"></i>
-                            <span>Профиль</span>
-                        </a></li>
                     {% else %}
-                        <li><a href="/app/login/"><i class="fas fa-sign-in-alt"></i> Вход</a></li>
+                        <li><a href="/app/login/" class="btn-small"><i class="fas fa-sign-in-alt"></i> Вход</a></li>
                         <li><a href="/app/register/" class="btn-small"><i class="fas fa-user-plus"></i> Регистрация</a></li>
                     {% endif %}
                 </ul>

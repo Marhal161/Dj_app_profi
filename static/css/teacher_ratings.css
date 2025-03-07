@@ -218,9 +218,20 @@
 }
 
 .join-class-btn:disabled {
-    background: var(--bg-darker);
-    cursor: not-allowed;
-    transform: none;
+    background: var(--bg-darker) !important;
+    color: var(--text-light) !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.join-class-btn:disabled i {
+    color: var(--text-light);
+}
+
+.join-class-btn:disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 .join-class-btn.request-sent {
