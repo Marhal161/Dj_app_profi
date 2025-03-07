@@ -135,26 +135,28 @@ function addInputAnimations() {
 
 // Добавляем функцию для переключения видимости пароля
 function setupPasswordToggle() {
-    const passwordToggle = document.querySelector('.password-toggle');
-    const passwordField = document.getElementById('password');
+    const togglePassword = document.querySelector('.toggle-password');
+    const passwordInput = document.getElementById('password');
     
-    if (passwordToggle && passwordField) {
-        passwordToggle.addEventListener('click', function() {
-            const icon = this.querySelector('i');
-            
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', function() {
             // Переключаем тип поля между password и text
-            if (passwordField.type === 'password') {
-                passwordField.type = 'text';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Меняем иконку и добавляем/убираем класс active
+            if (type === 'text') {
+                this.classList.remove('fa-eye');
+                this.classList.add('fa-eye-slash');
+                this.classList.add('active');
             } else {
-                passwordField.type = 'password';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
+                this.classList.remove('fa-eye-slash');
+                this.classList.add('fa-eye');
+                this.classList.remove('active');
             }
             
             // Фокусируемся на поле пароля
-            passwordField.focus();
+            passwordInput.focus();
         });
     }
 } 

@@ -36,6 +36,10 @@
                     <i class="fas fa-thumbs-down"></i>
                     <span>{{ teacher.dislikes_count }}</span>
                 </div>
+                <div class="stat-item activity">
+                    <i class="fas fa-chart-line"></i>
+                    <span>{{ teacher.activity_score }}</span>
+                </div>
                 <div class="stat-item rating">
                     <i class="fas fa-star"></i>
                     <span>{{ teacher.rating }}</span>
@@ -55,6 +59,16 @@
                 </div>
                 {% endwith %}
             </div>
+            {% if is_authenticated and user_info.user_type == 'student' %}
+            <div class="teacher-actions">
+                <button class="join-class-btn" 
+                        data-teacher-id="{{ teacher.id }}"
+                        onclick="sendJoinRequest(this)">
+                    <i class="fas fa-user-plus"></i>
+                    Подать заявку
+                </button>
+            </div>
+            {% endif %}
         </div>
         {% empty %}
         <div class="no-teachers">
@@ -64,4 +78,98 @@
         {% endfor %}
     </div>
 </div>
+
+<!-- Добавим модальное окно для сообщений -->
+<div id="messageModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <p id="modalMessage"></p>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function sendJoinRequest(button) {
+    const teacherId = button.dataset.teacherId;
+    
+    console.log('Sending request for teacher:', teacherId);
+    
+    fetch(`/app/teachers/${teacherId}/join/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            console.log('Response not OK');
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-check"></i> Заявка отправлена';
+            button.classList.add('request-sent');
+            showMessage('success', data.message);
+        } else {
+            showMessage('error', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        console.error('Error details:', error.message);
+        showMessage('error', 'Произошла ошибка при отправке заявки');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showMessage(type, text) {
+    const messagesContainer = document.querySelector('.messages') || createMessagesContainer();
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `alert alert-${type}`;
+    messageDiv.textContent = text;
+    messagesContainer.appendChild(messageDiv);
+    
+    setTimeout(() => {
+        messageDiv.style.opacity = '0';
+        setTimeout(() => messageDiv.remove(), 300);
+    }, 3000);
+}
+
+function createMessagesContainer() {
+    const container = document.createElement('div');
+    container.className = 'messages';
+    document.querySelector('.ratings-container').prepend(container);
+    return container;
+}
+
+// Закрытие модального окна
+const modal = document.getElementById('messageModal');
+const span = document.getElementsByClassName('close')[0];
+span.onclick = () => modal.style.display = 'none';
+window.onclick = (event) => {
+    if (event.target == modal) modal.style.display = 'none';
+}
+</script>
 {% endblock %} 

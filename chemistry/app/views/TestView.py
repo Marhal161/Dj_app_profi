@@ -2,10 +2,15 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.contrib import messages
 from django.utils import timezone
-from ..models import Test, TestQuestion, TestAttempt, TestAnswer, Class, ClassStudent
+from ..models import Test, TestQuestion, TestAttempt, TestAnswer, Class, ClassStudent, User
 from ..decorators import check_auth_tokens, teacher_required
 from django.utils.decorators import method_decorator
 from django.db.models import Sum, Count
+from django.http import JsonResponse
+import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 class TestListView(View):
     template_name = 'tests/test_list.html'
@@ -480,74 +485,79 @@ class TestReviewDetailView(View):
         }
         return render(request, self.template_name, context)
     
-    def post(self, request, attempt_id, *args, **kwargs):
-        user_info = request.user_info
-        is_authenticated = request.is_authenticated
-        
-        if not is_authenticated or user_info.get('user_type') != 'teacher':
-            messages.error(request, 'Доступ запрещен')
-            return redirect('home_page')
-        
-        attempt = get_object_or_404(TestAttempt, id=attempt_id)
-        
-        # Если тест уже проверен, показываем результаты
-        if attempt.status not in ['awaiting_review', 'reviewed']:
-            messages.error(request, 'Этот тест не нуждается в проверке')
-            return redirect('test_review')
-        
-        # Проверка, была ли отправлена форма оценки
-        if 'save_review' in request.POST:
-            # Получаем все ответы на часть B
-            answers_part_b = TestAnswer.objects.filter(
-                attempt=attempt,
-                question__question_type__in=['part_b', 'long_answer']
-            )
+    @method_decorator(check_auth_tokens)
+    @method_decorator(teacher_required)
+    def post(self, request, attempt_id):
+        try:
+            if not request.body:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Отсутствуют данные для проверки'
+                })
+
+            data = json.loads(request.body)
             
-            # Сумма баллов для части B
-            part_b_score = 0
+            if 'score' not in data:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Не указана оценка'
+                })
+
+            test_attempt = TestAttempt.objects.get(id=attempt_id)
             
-            # Обрабатываем оценки и комментарии для каждого ответа
-            for answer in answers_part_b:
-                points_key = f'points_{answer.id}'
-                comment_key = f'comment_{answer.id}'
-                
-                if points_key in request.POST:
-                    # Получаем баллы
-                    points = int(request.POST.get(points_key, 0))
-                    # Ограничиваем баллы от 0 до 2
-                    points = max(0, min(points, 2))
-                    
-                    # Сохраняем баллы
-                    answer.points_awarded = points
-                    part_b_score += points
-                
-                if comment_key in request.POST:
-                    # Сохраняем комментарий
-                    answer.teacher_comment = request.POST.get(comment_key, '')
-                
-                answer.save()
+            # Проверяем, что учитель имеет право проверять этот тест
+            student_class = ClassStudent.objects.filter(
+                student=test_attempt.user
+            ).first()
+
+            if not student_class or student_class.class_group.teacher_id != request.user_info['user_id']:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'У вас нет прав для проверки этого теста'
+                })
+
+            # Обновляем оценку и статус
+            test_attempt.score = data['score']
             
-            # Обновляем общий балл за тест
-            # Получаем сумму баллов за часть A
-            part_a_score = TestAnswer.objects.filter(
-                attempt=attempt,
-                question__question_type='part_a',
-                is_correct=True
-            ).aggregate(Sum('points_awarded'))['points_awarded__sum'] or 0
-            
-            # Общий балл - сумма баллов за обе части
-            attempt.score = part_a_score + part_b_score
-            
-            # Обновляем статус на "проверен"
-            attempt.status = 'reviewed'
-            attempt.reviewed_at = timezone.now()
-            attempt.save()
-            
-            messages.success(request, 'Оценка успешно сохранена')
-            return redirect('test_review')
-        
-        # Если форма не отправлена, возвращаемся на страницу
-        return self.get(request, attempt_id, *args, **kwargs)
+            # Обновляем комментарии к ответам
+            if 'feedback' in data and isinstance(data['feedback'], dict):
+                for answer_id, comment in data['feedback'].items():
+                    try:
+                        answer = TestAnswer.objects.get(
+                            id=answer_id,
+                            attempt=test_attempt
+                        )
+                        answer.teacher_comment = comment
+                        answer.save()
+                    except TestAnswer.DoesNotExist:
+                        continue
+
+            test_attempt.status = 'checked'
+            test_attempt.checked_at = timezone.now()
+            test_attempt.save()
+
+            # Увеличиваем активность учителя
+            teacher = User.objects.get(id=request.user_info['user_id'])
+            teacher.activity_score += 5
+            teacher.save()
+            teacher.update_rating()
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Тест успешно проверен'
+            })
+
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Неверный формат данных'
+            })
+        except Exception as e:
+            logger.error(f"Error in test review: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
 
 class TestStartView(View):
     template_name = 'tests/test_start.html'

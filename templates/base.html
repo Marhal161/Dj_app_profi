@@ -11,13 +11,6 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    {% if debug %}
-    <div style="background: #f8f9fa; padding: 10px; margin: 10px; border: 1px solid #ddd;">
-        <p>Debug info:</p>
-        <p>is_authenticated: {{ is_authenticated }}</p>
-        <p>user_info: {{ user_info }}</p>
-    </div>
-    {% endif %}
     <header id="main-header">
         <div class="container">
             <nav>

@@ -27,6 +27,11 @@ class User(AbstractUser):
         verbose_name=_('рейтинг')
     )
     
+    activity_score = models.IntegerField(
+        default=0,
+        verbose_name=_('очки активности')
+    )
+    
     # Добавим связь для отслеживания лайков
     liked_by = models.ManyToManyField(
         'self',
@@ -62,6 +67,13 @@ class User(AbstractUser):
         if total == 0:
             return 0
         return int((self.liked_by.count() / total) * 100)
+    
+    def update_rating(self):
+        # Общий рейтинг = лайки - дизлайки + активность
+        likes = self.liked_by.count()
+        dislikes = self.disliked_by.count()
+        self.rating = likes - dislikes + (self.activity_score // 10)  # Делим на 10, чтобы активность не перевешивала лайки
+        self.save()
     
     class Meta:
         verbose_name = _('пользователь')
@@ -324,6 +336,10 @@ class ClassInvitation(models.Model):
         ('rejected', 'Отклонено')
     ], default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
+    initiated_by = models.CharField(max_length=20, choices=[
+        ('teacher', 'Учитель'),
+        ('student', 'Ученик')
+    ], default='teacher')
 
     class Meta:
         unique_together = ('class_group', 'student')

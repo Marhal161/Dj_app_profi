@@ -37,6 +37,45 @@
             </button>
         </div>
 
+        <!-- Секция с заявками -->
+        <div class="invitations-section">
+            <h2>Заявки на вступление в класс</h2>
+            {% if pending_invitations %}
+            <div class="invitations-list">
+                {% for invitation in pending_invitations %}
+                <div class="invitation-card" data-invitation-id="{{ invitation.id }}">
+                    <div class="invitation-info">
+                        <h4>{{ invitation.student.get_full_name|default:invitation.student.username }}</h4>
+                        <p>@{{ invitation.student.username }}</p>
+                        <p class="invitation-type">
+                            {% if invitation.initiated_by == 'student' %}
+                            <i class="fas fa-user"></i> Заявка от ученика
+                            {% else %}
+                            <i class="fas fa-chalkboard-teacher"></i> Ваше приглашение
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="invitation-actions">
+                        {% if invitation.initiated_by == 'student' %}
+                        <button class="btn btn-success accept-invitation" onclick="handleInvitation({{ invitation.id }}, 'accept')">
+                            <i class="fas fa-check"></i> Принять
+                        </button>
+                        {% endif %}
+                        <button class="btn btn-danger reject-invitation" onclick="handleInvitation({{ invitation.id }}, 'reject')">
+                            <i class="fas fa-times"></i> Отклонить
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-invitations">
+                <i class="fas fa-inbox"></i>
+                <p>Нет активных заявок</p>
+            </div>
+            {% endif %}
+        </div>
+
         <!-- Модальное окно -->
         <div id="modalOverlay" class="modal-overlay">
             <div class="modal-window">
@@ -83,43 +122,6 @@
         </div>
 
         <div class="content-section">
-            {% if pending_invitations %}
-            <div class="pending-invitations">
-                <h2>Отправленные приглашения</h2>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Ученик</th>
-                                <th>Email</th>
-                                <th>Статус</th>
-                                <th>Действия</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for invitation in pending_invitations %}
-                                <tr class="invitation-row">
-                                    <td>{{ invitation.student.username }}</td>
-                                    <td>{{ invitation.student.email }}</td>
-                                    <td><span class="status-badge pending">Ожидает ответа</span></td>
-                                    <td>
-                                        <form method="POST" action="{% url 'class_detail' class.id %}" class="cancel-invitation-form">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="action" value="cancel_invitation">
-                                            <input type="hidden" name="invitation_id" value="{{ invitation.id }}">
-                                            <button type="submit" class="btn btn-secondary btn-sm">
-                                                <i class="fas fa-ban"></i> Отменить
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            {% endif %}
-
             <div class="students-list">
                 <h2>Список учеников</h2>
                 {% if students %}
@@ -174,58 +176,50 @@
             <div class="content-section">
                 <h2 class="section-title">Мой класс</h2>
                 
-                {% if invitations %}
-                    <div class="pending-invitations">
-                        <h2>Приглашения в класс</h2>
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Название класса</th>
-                                        <th>Учитель</th>
-                                        <th>Действия</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for invitation in invitations %}
-                                        <tr class="invitation-row">
-                                            <td>{{ invitation.class_group.name }}</td>
-                                            <td>{{ invitation.class_group.teacher.username }}</td>
-                                            <td>
-                                                <div class="invitation-actions">
-                                                    <form method="POST" action="{% url 'class' %}" style="display: inline;">
-                                                        {% csrf_token %}
-                                                        <input type="hidden" name="action" value="accept_invitation">
-                                                        <input type="hidden" name="invitation_id" value="{{ invitation.id }}">
-                                                        <button type="submit" class="btn btn-success btn-sm">
-                                                            <i class="fas fa-check"></i> Принять
-                                                        </button>
-                                                    </form>
-                                                    <form method="POST" action="{% url 'class' %}" style="display: inline;">
-                                                        {% csrf_token %}
-                                                        <input type="hidden" name="action" value="reject_invitation">
-                                                        <input type="hidden" name="invitation_id" value="{{ invitation.id }}">
-                                                        <button type="submit" class="btn btn-danger btn-sm">
-                                                            <i class="fas fa-times"></i> Отклонить
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                <div class="invitations-section">
+                    <h2>Мои заявки</h2>
+                    {% if invitations %}
+                    <div class="invitations-list">
+                        {% for invitation in invitations %}
+                        <div class="invitation-card" data-invitation-id="{{ invitation.id }}">
+                            <div class="invitation-info">
+                                <h4>Класс: {{ invitation.class_group.name }}</h4>
+                                <p>Учитель: {{ invitation.class_group.teacher.username }}</p>
+                                <p class="invitation-type">
+                                    {% if invitation.initiated_by == 'student' %}
+                                    <i class="fas fa-user"></i> Ваша заявка
+                                    {% else %}
+                                    <i class="fas fa-chalkboard-teacher"></i> Приглашение от учителя
+                                    {% endif %}
+                                </p>
+                                <p class="invitation-status">
+                                    <i class="fas fa-clock"></i> Ожидает рассмотрения
+                                </p>
+                            </div>
+                            <div class="invitation-actions">
+                                {% if invitation.initiated_by == 'student' %}
+                                <button class="btn btn-danger" onclick="cancelInvitation({{ invitation.id }})">
+                                    <i class="fas fa-times"></i> Отменить заявку
+                                </button>
+                                {% else %}
+                                <button class="btn btn-success" onclick="handleInvitation({{ invitation.id }}, 'accept')">
+                                    <i class="fas fa-check"></i> Принять
+                                </button>
+                                <button class="btn btn-danger" onclick="handleInvitation({{ invitation.id }}, 'reject')">
+                                    <i class="fas fa-times"></i> Отклонить
+                                </button>
+                                {% endif %}
+                            </div>
                         </div>
+                        {% endfor %}
                     </div>
-                {% else %}
+                    {% else %}
                     <div class="no-invitations">
-                        <div class="empty-state">
-                            <i class="fas fa-envelope-open-text empty-icon"></i>
-                            <p>У вас пока нет приглашений в класс</p>
-                            <p class="empty-subtitle">Ожидайте приглашения от учителя</p>
-                        </div>
+                        <i class="fas fa-inbox"></i>
+                        <p>У вас нет активных заявок</p>
                     </div>
-                {% endif %}
+                    {% endif %}
+                </div>
             </div>
         {% else %}
             <div class="class-header">
@@ -253,6 +247,12 @@
                             </div>
                         {% endif %}
                     </div>
+                </div>
+                <div class="class-actions">
+                    <button id="leaveClassBtn" class="btn btn-danger" onclick="leaveClass()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Покинуть класс
+                    </button>
                 </div>
             </div>
 
@@ -481,6 +481,120 @@
             });
         }
     });
+
+    function leaveClass() {
+        if (confirm('Вы действительно хотите покинуть класс?')) {
+            fetch('{% url "class" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    action: 'leave_class'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('success', data.message);
+                    // Перезагружаем страницу через 1 секунду
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showMessage('error', data.error);
+                }
+            })
+            .catch(error => {
+                showMessage('error', 'Произошла ошибка при выполнении запроса');
+            });
+        }
+    }
+
+    function handleInvitation(invitationId, action) {
+        fetch(`/app/class/invitation/${invitationId}/${action}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Удаляем карточку приглашения
+                const card = document.querySelector(`.invitation-card[data-invitation-id="${invitationId}"]`);
+                card.style.opacity = '0';
+                setTimeout(() => {
+                    card.remove();
+                    // Проверяем, остались ли еще приглашения
+                    const remainingCards = document.querySelectorAll('.invitation-card');
+                    if (remainingCards.length === 0) {
+                        const container = document.querySelector('.invitations-list');
+                        container.innerHTML = `
+                            <div class="no-invitations">
+                                <i class="fas fa-inbox"></i>
+                                <p>Нет активных заявок</p>
+                            </div>
+                        `;
+                    }
+                    // Обновляем список учеников, если заявка была принята
+                    if (action === 'accept') {
+                        location.reload();
+                    }
+                }, 300);
+                showMessage('success', data.message);
+            } else {
+                showMessage('error', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('error', 'Произошла ошибка при обработке заявки');
+        });
+    }
+
+    function cancelInvitation(invitationId) {
+        if (confirm('Вы действительно хотите отменить заявку?')) {
+            fetch(`/app/class/invitation/${invitationId}/reject/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Удаляем карточку приглашения
+                    const card = document.querySelector(`.invitation-card[data-invitation-id="${invitationId}"]`);
+                    card.style.opacity = '0';
+                    setTimeout(() => {
+                        card.remove();
+                        // Проверяем, остались ли еще приглашения
+                        const remainingCards = document.querySelectorAll('.invitation-card');
+                        if (remainingCards.length === 0) {
+                            const container = document.querySelector('.invitations-list');
+                            container.innerHTML = `
+                                <div class="no-invitations">
+                                    <i class="fas fa-inbox"></i>
+                                    <p>У вас нет активных заявок</p>
+                                </div>
+                            `;
+                        }
+                    }, 300);
+                    showMessage('success', 'Заявка отменена');
+                } else {
+                    showMessage('error', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('error', 'Произошла ошибка при отмене заявки');
+            });
+        }
+    }
 </script>
 {% endblock %}
 

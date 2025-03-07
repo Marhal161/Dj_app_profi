@@ -322,4 +322,48 @@ body {
     0%, 100% { transform: translateX(0); }
     10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
     20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.password-field {
+    position: relative;
+}
+
+.password-field .password-icon {
+    position: absolute;
+    left: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-lighter);
+    transition: all 0.3s ease;
+    font-size: 1.8rem;
+}
+
+.password-field .toggle-password {
+    position: absolute;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-lighter);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.8rem;
+}
+
+.password-field .toggle-password:hover {
+    color: var(--primary-color);
+}
+
+.password-field input:focus ~ .password-icon,
+.password-field input:focus ~ .toggle-password {
+    color: var(--primary-color);
+}
+
+.password-field input {
+    padding-right: 4.5rem !important;
+}
+
+/* Анимация для иконки */
+.toggle-password.active {
+    color: var(--primary-color);
+    transform: translateY(-50%) scale(1.1);
 } 

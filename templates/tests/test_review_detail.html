@@ -10,6 +10,8 @@
 
 {% block content %}
 <div class="test-review-container">
+    <div id="message-box" class="message-box" style="display: none;"></div>
+
     {% if messages %}
     <div class="messages">
         {% for message in messages %}
@@ -62,7 +64,7 @@
         </div>
     </div>
 
-    <form method="POST" action="{% url 'test_review_detail' attempt.id %}" id="reviewForm">
+    <form id="reviewForm">
         {% csrf_token %}
         
         <div class="result-section">
@@ -152,7 +154,7 @@
         </div>
         
         <div class="review-actions">
-            <button type="submit" name="save_review" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save"></i> Сохранить оценку
             </button>
         </div>
@@ -248,6 +250,15 @@
                 }
             }
         });
+
+        // Добавляем обработчик отправки формы
+        const form = document.getElementById('reviewForm');
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                submitReview();
+            });
+        }
     });
 
     function selectPoints(answerId, points) {
@@ -272,6 +283,98 @@
         
         // Обновляем значение в скрытом поле
         document.getElementById(`points_${answerId}`).value = points;
+    }
+
+    function submitReview() {
+        // Собираем данные о баллах
+        const pointsInputs = document.querySelectorAll('[id^="points_"]');
+        let totalScore = 0;
+        
+        pointsInputs.forEach(input => {
+            totalScore += parseInt(input.value) || 0;
+        });
+        
+        // Собираем комментарии
+        const comments = {};
+        document.querySelectorAll('[id^="comment_"]').forEach(textarea => {
+            const answerId = textarea.id.replace('comment_', '');
+            comments[answerId] = textarea.value;
+        });
+        
+        const data = {
+            score: totalScore,
+            feedback: comments
+        };
+
+        // Добавим console.log для отладки
+        console.log('Отправляемые данные:', data);
+
+        fetch(window.location.pathname, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            // Добавим console.log для отладки
+            console.log('Статус ответа:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            // Добавим console.log для отладки
+            console.log('Ответ сервера:', data);
+            
+            if (data.success) {
+                showMessage('success', 'Тест успешно проверен');
+                // Перенаправляем на страницу со списком тестов через 2 секунды
+                setTimeout(() => {
+                    window.location.href = '/app/tests/review/';
+                }, 2000);
+            } else {
+                showMessage('error', data.error || 'Произошла ошибка при проверке теста');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('error', 'Произошла ошибка при отправке данных');
+        });
+    }
+
+    function showMessage(type, text) {
+        const messageBox = document.getElementById('message-box');
+        if (!messageBox) {
+            console.error('Element message-box not found');
+            return;
+        }
+        
+        messageBox.className = `message-box ${type}`;
+        messageBox.textContent = text;
+        messageBox.style.display = 'block';
+
+        // Прокручиваем к сообщению
+        messageBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Скрываем сообщение через 5 секунд
+        setTimeout(() => {
+            messageBox.style.display = 'none';
+        }, 5000);
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 </script>
 {% endblock %} 

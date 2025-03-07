@@ -9,7 +9,7 @@ from .views.LogoutView import LogoutView
 from .views.HomeView import HomePageView
 from .views import NewsView
 from .views.ArticleView import ArticleViewSet, ArticleListView, ArticleDetailView
-from .views.ClassView import ClassView, RenameClassView, TeacherRatingView
+from .views.ClassView import ClassView, RenameClassView, TeacherRatingView, InvitationHandlerView
 from .views.MaterialView import MaterialView
 from .views.TestView import (
     TestListView, TestDetailView, TestTakeView, 
@@ -65,6 +65,8 @@ urlpatterns = [
     path('profile/', ProfileView.as_view(), name='profile'),
     path('api/teacher/<int:teacher_id>/rate/', csrf_protect(TeacherRatingView.as_view()), name='rate_teacher'),
     path('teachers/ratings/', TeacherRatingListView.as_view(), name='teacher_ratings'),
+    path('teachers/<int:teacher_id>/join/', csrf_protect(TeacherRatingListView.as_view()), name='join_teacher_class'),
+    path('class/invitation/<int:invitation_id>/<str:action>/', csrf_protect(InvitationHandlerView.as_view()), name='handle_invitation'),
 ]
 
 if settings.DEBUG:

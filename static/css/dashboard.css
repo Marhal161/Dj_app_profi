@@ -1,0 +1,50 @@
+.invitation-card {
+    background: var(--bg-dark);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(123, 44, 191, 0.3);
+    transition: all 0.3s ease;
+}
+
+.invitation-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.invitation-info {
+    margin-bottom: 1.5rem;
+}
+
+.invitation-info h4 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.invitation-type {
+    color: var(--text-light);
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.invitation-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.no-invitations {
+    text-align: center;
+    padding: 4rem;
+    color: var(--text-light);
+}
+
+.no-invitations i {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+} 

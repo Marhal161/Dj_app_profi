@@ -190,4 +190,44 @@
 </div>
 
 <script src="{% static 'js/teacher_dashboard.js' %}"></script>
+<script>
+function handleInvitation(invitationId, action) {
+    fetch(`/app/class/invitation/${invitationId}/${action}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Удаляем карточку приглашения
+            const card = document.querySelector(`.invitation-card[data-invitation-id="${invitationId}"]`);
+            card.style.opacity = '0';
+            setTimeout(() => {
+                card.remove();
+                // Проверяем, остались ли еще приглашения
+                const remainingCards = document.querySelectorAll('.invitation-card');
+                if (remainingCards.length === 0) {
+                    const container = document.querySelector('.invitations-list');
+                    container.innerHTML = `
+                        <div class="no-invitations">
+                            <i class="fas fa-inbox"></i>
+                            <p>Нет активных заявок</p>
+                        </div>
+                    `;
+                }
+            }, 300);
+            showMessage('success', data.message);
+        } else {
+            showMessage('error', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('error', 'Произошла ошибка при обработке заявки');
+    });
+}
+</script>
 {% endblock %}
