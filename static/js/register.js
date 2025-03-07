@@ -61,42 +61,40 @@ document.addEventListener('DOMContentLoaded', function() {
     const gradeGroup = document.getElementById('grade-group');
     const registerForm = document.getElementById('register-form');
     const messageBox = document.getElementById('message-box');
-    const changeUserTypeLink = document.getElementById('change-user-type');
+    const changeUserType = document.getElementById('change-user-type');
     
     // Обработка выбора типа пользователя
     userTypeCards.forEach(card => {
         card.addEventListener('click', function() {
-            // Удаляем класс selected у всех карточек
-            userTypeCards.forEach(c => c.classList.remove('selected'));
-            
-            // Добавляем класс selected к выбранной карточке
-            this.classList.add('selected');
-            
-            // Сохраняем выбранный тип пользователя
             const userType = this.getAttribute('data-type');
             userTypeInput.value = userType;
-            
-            // Показываем/скрываем поле класса в зависимости от типа пользователя
+
+            // Убираем выделение со всех карточек
+            userTypeCards.forEach(c => c.classList.remove('selected'));
+            // Добавляем выделение выбранной карточке
+            this.classList.add('selected');
+
+            // Показываем поле для класса только для учеников
             if (userType === 'student') {
                 gradeGroup.style.display = 'block';
             } else {
                 gradeGroup.style.display = 'none';
             }
-            
-            // Переходим к шагу 2 через небольшую задержку
-            setTimeout(() => {
-                step1.classList.remove('active-step');
-                step2.classList.add('active-step');
-            }, 300);
+
+            // Переходим к шагу 2
+            step1.classList.remove('active-step');
+            step2.classList.add('active-step');
         });
     });
     
-    // Ссылка для изменения типа пользователя
-    changeUserTypeLink.addEventListener('click', function(e) {
-        e.preventDefault();
-        step2.classList.remove('active-step');
-        step1.classList.add('active-step');
-    });
+    // Возврат к выбору типа пользователя
+    if (changeUserType) {
+        changeUserType.addEventListener('click', function(e) {
+            e.preventDefault();
+            step2.classList.remove('active-step');
+            step1.classList.add('active-step');
+        });
+    }
     
     // Обработка отправки формы
     registerForm.addEventListener('submit', function(e) {

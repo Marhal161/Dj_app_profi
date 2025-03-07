@@ -1,52 +1,84 @@
 .profile-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 3rem 2rem;
 }
 
 .profile-header {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    margin-bottom: 3rem;
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: var(--shadow-sm);
+    background: var(--bg-light);
+    border-radius: var(--radius-lg);
+    padding: 3rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(123, 44, 191, 0.2);
     position: relative;
+    overflow: hidden;
+}
+
+.profile-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
 }
 
 .profile-avatar {
     width: 120px;
     height: 120px;
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-md);
+    border: 4px solid var(--bg-light);
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+.profile-avatar:hover {
+    transform: scale(1.05);
 }
 
 .profile-avatar i {
-    font-size: 3.5rem;
+    font-size: 4rem;
     color: white;
 }
 
+.profile-info {
+    text-align: center;
+}
+
 .profile-info h1 {
+    font-size: 3rem;
     margin: 0;
-    font-size: 2.4rem;
-    color: #000;
+    background: linear-gradient(135deg, var(--primary-light), var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
 }
 
 .profile-info .username {
-    color: #666;
-    font-size: 1.6rem;
-    margin: 0.5rem 0;
+    color: var(--text-light);
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 .profile-info .email {
-    color: #666;
-    font-size: 1.4rem;
-    margin: 0.5rem 0;
+    color: var(--text-light);
+    font-size: 1.6rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 .grade-badge {
@@ -108,28 +140,42 @@
 }
 
 .class-info {
-    display: grid;
-    gap: 1.5rem;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(123, 44, 191, 0.2);
 }
 
-.info-item {
+.class-details {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 1.5rem;
     align-items: center;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 8px;
 }
 
-.info-item .label {
-    color: #666;
-    font-size: 1.4rem;
+.class-details p {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.6rem;
+    color: var(--text-light);
+    margin: 0;
 }
 
-.info-item .value {
-    font-size: 1.4rem;
-    font-weight: 500;
-    color: #000;
+.class-details i {
+    color: var(--primary-light);
+    font-size: 2rem;
+}
+
+.class-name {
+    padding: 1rem 2rem;
+    background: rgba(123, 44, 191, 0.1);
+    border-radius: var(--radius-full);
+    transition: all 0.3s ease;
+}
+
+.class-name:hover {
+    background: rgba(123, 44, 191, 0.2);
+    transform: translateY(-2px);
 }
 
 .no-class {
@@ -141,14 +187,29 @@
 
 @media (max-width: 768px) {
     .profile-header {
-        flex-direction: column;
-        text-align: center;
+        padding: 2rem;
     }
 
-    .info-item {
+    .profile-info h1 {
+        font-size: 2.4rem;
+    }
+
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+    }
+
+    .modal-content {
+        padding: 2rem;
+        margin: 2rem;
+    }
+
+    .modal-buttons {
         flex-direction: column;
-        gap: 0.5rem;
-        text-align: center;
+    }
+
+    .modal-buttons button {
+        width: 100%;
     }
 }
 
@@ -159,59 +220,67 @@
 }
 
 .btn-settings {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 1rem;
-    background: transparent;
-    color: #666;
+    background: none;
     border: none;
+    color: var(--text-light);
+    width: 4rem;
+    height: 4rem;
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
 }
 
 .btn-settings:hover {
-    color: var(--primary-color);
+    background: rgba(123, 44, 191, 0.1);
+    color: var(--primary-light);
     transform: rotate(90deg);
 }
 
 .form-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 0.5rem;
-    color: #666;
+    margin-bottom: 0.8rem;
+    color: var(--text-light);
     font-size: 1.4rem;
 }
 
 .form-group input {
     width: 100%;
-    padding: 1rem;
-    border: 1px solid #ddd;
+    padding: 1.2rem;
+    border: 1px solid rgba(123, 44, 191, 0.2);
     border-radius: var(--radius-md);
+    background: var(--bg-dark);
+    color: var(--text-color);
     font-size: 1.4rem;
+    transition: all 0.3s ease;
 }
 
 .form-group input:focus {
     border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(123, 44, 191, 0.1);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
 }
 
 .modal {
-    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(19, 17, 27, 0.8);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    display: none;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: var(--z-modal);
 }
 
 .modal.active {
@@ -219,79 +288,83 @@
 }
 
 .modal-content {
-    background: white;
-    padding: 2rem;
+    background: var(--bg-light);
+    padding: 3rem;
     border-radius: var(--radius-lg);
     width: 90%;
     max-width: 500px;
     position: relative;
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+    border: 1px solid rgba(123, 44, 191, 0.2);
+}
+
+.modal.active .modal-content {
+    transform: translateY(0);
 }
 
 .modal-content h2 {
-    margin-bottom: 2rem;
-    color: #333;
-    font-size: 2rem;
+    margin: 0 0 2rem;
+    color: var(--text-color);
+    font-size: 2.4rem;
+    text-align: center;
 }
 
-.modal-content .close-btn {
+.close-btn {
     position: absolute;
-    top: 1rem;
-    right: 1rem;
+    top: 2rem;
+    right: 2rem;
     background: none;
     border: none;
-    font-size: 2rem;
-    color: #666;
+    color: var(--text-light);
+    font-size: 2.4rem;
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: all 0.3s ease;
 }
 
-.modal-content .close-btn:hover {
-    color: var(--primary-color);
+.close-btn:hover {
+    color: var(--primary-light);
+    transform: rotate(90deg);
 }
 
 .modal-buttons {
     display: flex;
     justify-content: flex-end;
     gap: 1rem;
-    margin-top: 2rem;
+    margin-top: 3rem;
 }
 
 .modal-buttons button {
-    padding: 1rem 2rem;
-    border-radius: var(--radius-md);
+    padding: 1.2rem 2.4rem;
+    border-radius: var(--radius-full);
     font-size: 1.4rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
 }
 
-.modal-buttons .btn-primary {
-    background: var(--primary-color);
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: white;
     border: none;
 }
 
-.modal-buttons .btn-secondary {
-    background: #f8f9fa;
-    color: #666;
-    border: 1px solid #ddd;
+.btn-secondary {
+    background: rgba(123, 44, 191, 0.1);
+    color: var(--text-light);
+    border: 1px solid rgba(123, 44, 191, 0.2);
 }
 
-.class-details {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #eee;
+.btn-primary:hover,
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
 }
 
-.class-details p {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    margin: 0.5rem 0;
-    color: #666;
-    font-size: 1.4rem;
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.class-details i {
-    color: var(--primary-color);
-    font-size: 1.6rem;
+.profile-header {
+    animation: fadeIn 0.5s ease forwards;
 } 

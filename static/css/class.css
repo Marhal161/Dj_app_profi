@@ -9,21 +9,45 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
-    padding: 20px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 25px;
+    background: var(--bg-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(123, 44, 191, 0.2);
 }
 
-.header-content h1 {
+.header-content {
+    flex: 1;
+}
+
+.class-title {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.class-title h1 {
     margin: 0;
-    color: #333;
-    font-size: 24px;
+    font-size: 2.4rem;
+    background: linear-gradient(135deg, var(--primary-light), var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
-.header-content p {
-    margin: 5px 0 0;
-    color: #666;
+.btn-settings {
+    padding: 10px;
+    background: none;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    border-radius: var(--radius-full);
+    transition: all 0.3s ease;
+}
+
+.btn-settings:hover {
+    color: var(--primary-light);
+    background: rgba(123, 44, 191, 0.1);
+    transform: rotate(90deg);
 }
 
 .add-student-section {
@@ -41,22 +65,34 @@
 
 .add-student-form {
     display: flex;
-    gap: 15px;
-    align-items: center;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    color: var(--text-light);
+    font-size: 1.4rem;
 }
 
 .form-control {
-    width: 100%;
     padding: 12px 15px;
-    border: 2px solid #e1e5ee;
-    border-radius: 8px;
-    font-size: 1em;
+    border: 1px solid rgba(123, 44, 191, 0.2);
+    border-radius: var(--radius-md);
+    background: var(--bg-dark);
+    color: var(--text-color);
+    font-size: 1.4rem;
     transition: all 0.3s ease;
 }
 
 .form-control:focus {
-    border-color: #4a6cf7;
-    box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(123, 44, 191, 0.1);
     outline: none;
 }
 
@@ -205,20 +241,24 @@
 
 .btn {
     padding: 8px 16px;
-    border: none;
-    border-radius: 5px;
+    border-radius: var(--radius-full);
+    font-size: 1.3rem;
     cursor: pointer;
-    font-weight: 500;
     transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .btn-primary {
-    background: #007bff;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: white;
+    border: none;
 }
 
 .btn-primary:hover {
-    background: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
 }
 
 .btn-danger {
@@ -241,8 +281,9 @@
 }
 
 .btn-secondary {
-    background-color: #6c757d;
-    color: white;
+    background: rgba(123, 44, 191, 0.1);
+    color: var(--text-light);
+    border: 1px solid rgba(123, 44, 191, 0.2);
 }
 
 .btn-secondary:hover {
@@ -254,19 +295,32 @@
 }
 
 .pending-invitations {
-    margin: 20px 0;
+    background: var(--bg-light);
+    border-radius: var(--radius-lg);
     padding: 20px;
-    background: #f8f9fa;
-    border-radius: 8px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(123, 44, 191, 0.2);
 }
 
-.status {
-    color: #856404;
-    background-color: #fff3cd;
+.pending-invitations h2 {
+    color: var(--text-color);
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
     padding: 5px 10px;
-    border-radius: 4px;
-    display: inline-block;
-    margin-top: 5px;
+    border-radius: var(--radius-full);
+    font-size: 1.2rem;
+    background: rgba(123, 44, 191, 0.1);
+    color: var(--primary-light);
+}
+
+.status-badge.pending {
+    background: linear-gradient(135deg, var(--accent-color), var(--accent-dark));
+    color: white;
 }
 
 .table-responsive {
@@ -286,23 +340,51 @@
     border-collapse: separate;
     border-spacing: 0;
     margin-bottom: 20px;
-}
-
-.table th,
-.table td {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
+    background: var(--bg-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid rgba(123, 44, 191, 0.2);
 }
 
 .table th {
-    background-color: #f7f9fc;
-    font-weight: 600;
-    color: #4a5568;
+    background: var(--bg-dark);
+    color: var(--text-light);
+    font-weight: 500;
+    padding: 1.5rem;
     text-align: left;
+    font-size: 1.4rem;
+    border-bottom: 1px solid rgba(123, 44, 191, 0.2);
+    position: relative;
+}
+
+.table th::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, var(--primary-color), transparent);
+}
+
+.table td {
+    padding: 1.5rem;
+    color: var(--text-color);
+    font-size: 1.4rem;
+    border-bottom: 1px solid rgba(123, 44, 191, 0.1);
+    transition: all 0.3s ease;
+}
+
+.table tr {
+    transition: all 0.3s ease;
 }
 
 .table tr:hover {
-    background-color: #f9fafb;
+    background: rgba(123, 44, 191, 0.05);
+}
+
+.table tr:hover td {
+    color: var(--primary-light);
 }
 
 .text-muted {
@@ -335,12 +417,12 @@
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    width: 100%;
+    height: 100%;
+    background: rgba(19, 17, 27, 0.8);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
-    z-index: 10000;
+    z-index: var(--z-modal);
     justify-content: center;
     align-items: center;
     opacity: 0;
@@ -352,55 +434,47 @@
 }
 
 .modal-window {
-    background-color: #fff;
-    border-radius: 12px;
-    width: 95%;
-    max-width: 550px;
-    margin: 20px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    transform: scale(0.9);
-    opacity: 0;
-    transition: all 0.3s ease;
+    background: var(--bg-light);
+    padding: 30px;
+    border-radius: var(--radius-lg);
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+    border: 1px solid rgba(123, 44, 191, 0.2);
 }
 
 .modal-overlay.active .modal-window {
-    transform: scale(1);
-    opacity: 1;
+    transform: translateY(0);
 }
 
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 25px;
-    border-bottom: 1px solid #eee;
+    margin-bottom: 20px;
 }
 
 .modal-header h2 {
     margin: 0;
-    font-size: 1.5em;
-    color: #2c3e50;
-    font-weight: 600;
+    color: var(--text-color);
+    font-size: 2rem;
 }
 
 .modal-close {
-    font-size: 28px;
-    font-weight: bold;
-    color: #aaa;
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 2.4rem;
     cursor: pointer;
-    transition: color 0.2s;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 40px;
-    width: 40px;
-    border-radius: 50%;
+    padding: 5px;
+    transition: all 0.3s ease;
 }
 
 .modal-close:hover {
-    color: #2c3e50;
-    background-color: #f5f5f5;
+    color: var(--primary-light);
+    transform: rotate(90deg);
 }
 
 .modal-window form {
@@ -564,24 +638,22 @@
 
 /* Улучшенные стили для кнопки */
 #openModalBtn {
-    background-color: #007bff;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: white;
-    cursor: pointer;
-    padding: 10px 20px;
     border: none;
-    border-radius: 6px;
-    transition: all 0.3s ease;
+    border-radius: var(--radius-full);
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-weight: 500;
-    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2);
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.4rem;
 }
 
 #openModalBtn:hover {
-    background-color: #0056b3;
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    box-shadow: var(--shadow-md);
 }
 
 #openModalBtn:active {
@@ -633,24 +705,23 @@
 @media (max-width: 768px) {
     .class-header {
         flex-direction: column;
-        gap: 15px;
+        gap: 20px;
+        text-align: center;
     }
-    
+
+    .class-title {
+        justify-content: center;
+    }
+
     .table-responsive {
-        margin: 0;
-        border-radius: 8px;
-        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
-    
-    .content-section {
-        padding: 0;
-        overflow: hidden;
-    }
-    
-    .table th,
-    .table td {
-        padding: 10px;
-        font-size: 13px;
+
+    .modal-window {
+        width: 95%;
+        margin: 10px;
+        padding: 20px;
     }
 }
 
@@ -756,4 +827,363 @@
 
 .text-muted {
     color: #6c757d !important;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.messages .alert {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+/* Стили для действий в таблице */
+.table .actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.table .btn {
+    padding: 0.8rem 1.6rem;
+    font-size: 1.3rem;
+}
+
+/* Стили для статусов */
+.table .status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-full);
+    font-size: 1.3rem;
+    font-weight: 500;
+}
+
+.table .status.active {
+    background: rgba(46, 213, 115, 0.1);
+    color: #2ed573;
+}
+
+.table .status.pending {
+    background: rgba(255, 171, 0, 0.1);
+    color: #ffab00;
+}
+
+/* Адаптивная таблица */
+.table-responsive {
+    overflow-x: auto;
+    border-radius: var(--radius-lg);
+    background: var(--bg-light);
+    box-shadow: var(--shadow-sm);
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+    border-radius: var(--radius-full);
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: var(--radius-full);
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+/* Пустое состояние таблицы */
+.table-empty {
+    padding: 4rem 2rem;
+    text-align: center;
+    color: var(--text-light);
+}
+
+.table-empty i {
+    font-size: 4rem;
+    color: var(--text-lighter);
+    margin-bottom: 1.5rem;
+}
+
+.table-empty p {
+    font-size: 1.6rem;
+    margin: 0;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+    .table th,
+    .table td {
+        padding: 1.2rem;
+        font-size: 1.3rem;
+    }
+
+    .table .actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .table .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Анимация при добавлении новой строки */
+@keyframes highlightRow {
+    0% {
+        background-color: rgba(123, 44, 191, 0.2);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+.table tr.new-row {
+    animation: highlightRow 1s ease-out;
+}
+
+/* Современная таблица */
+.table-container {
+    background: var(--bg-light);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(123, 44, 191, 0.2);
+    margin: 2rem 0;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(123, 44, 191, 0.2);
+}
+
+.table-header h2 {
+    font-size: 2rem;
+    color: var(--text-color);
+    margin: 0;
+    background: linear-gradient(135deg, var(--primary-light), var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.table-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Стилизация таблицы */
+.table-responsive {
+    overflow-x: auto;
+    border-radius: var(--radius-md);
+}
+
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0;
+}
+
+/* Заголовки таблицы */
+.table thead tr {
+    background: linear-gradient(
+        135deg,
+        rgba(123, 44, 191, 0.1),
+        rgba(255, 125, 255, 0.1)
+    );
+}
+
+.table th {
+    padding: 1.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 1.2rem;
+    letter-spacing: 0.5px;
+    color: var(--primary-light);
+    border-bottom: 2px solid rgba(123, 44, 191, 0.2);
+    text-align: left;
+    transition: all 0.3s ease;
+}
+
+/* Ячейки таблицы */
+.table td {
+    padding: 1.6rem;
+    color: var(--text-color);
+    font-size: 1.4rem;
+    border-bottom: 1px solid rgba(123, 44, 191, 0.1);
+    transition: all 0.3s ease;
+}
+
+/* Строки таблицы */
+.table tbody tr {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.table tbody tr:hover {
+    background: rgba(123, 44, 191, 0.05);
+    transform: translateX(5px);
+}
+
+.table tbody tr:hover td {
+    color: var(--primary-light);
+}
+
+/* Статусы */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-full);
+    font-size: 1.2rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.status-badge.active {
+    background: rgba(46, 213, 115, 0.1);
+    color: #2ed573;
+}
+
+.status-badge.pending {
+    background: rgba(255, 171, 0, 0.1);
+    color: #ffab00;
+}
+
+.status-badge i {
+    font-size: 1.4rem;
+}
+
+/* Действия */
+.table-actions-cell {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.action-btn {
+    padding: 0.8rem;
+    border-radius: var(--radius-full);
+    border: none;
+    background: none;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-btn:hover {
+    background: rgba(123, 44, 191, 0.1);
+    color: var(--primary-light);
+    transform: translateY(-2px);
+}
+
+.action-btn.edit:hover {
+    color: var(--primary-color);
+}
+
+.action-btn.delete:hover {
+    color: #ff4757;
+}
+
+/* Пустое состояние */
+.table-empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: var(--bg-dark);
+    border-radius: var(--radius-md);
+    margin: 2rem 0;
+}
+
+.table-empty-state i {
+    font-size: 4rem;
+    color: var(--text-lighter);
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+.table-empty-state h3 {
+    color: var(--text-color);
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.table-empty-state p {
+    color: var(--text-light);
+    font-size: 1.4rem;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Скроллбар */
+.table-responsive::-webkit-scrollbar {
+    height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+    border-radius: var(--radius-full);
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    border-radius: var(--radius-full);
+}
+
+/* Анимация для новых строк */
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.table tr.new-row {
+    animation: fadeInLeft 0.5s ease forwards;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .table-container {
+        padding: 1.5rem;
+    }
+
+    .table-header {
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: flex-start;
+    }
+
+    .table th,
+    .table td {
+        padding: 1.2rem;
+        font-size: 1.3rem;
+    }
+
+    .table-actions-cell {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .action-btn {
+        width: 100%;
+        padding: 1rem;
+    }
 } 

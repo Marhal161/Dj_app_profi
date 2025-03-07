@@ -3,31 +3,31 @@
 
 /* Современные общие стили для всего сайта */
 :root {
-  /* Основная цветовая палитра */
-  --primary-color: #4361ee;
-  --primary-dark: #3a56d4;
-  --primary-light: #738efc;
-  --secondary-color: #4cc9f0;
-  --secondary-dark: #38b6db;
-  --secondary-light: #72d6f5;
-  --accent-color: #f72585;
-  --accent-dark: #e01e79;
-  --accent-light: #ff5da2;
+  /* Основная цветовая палитра - тёмно-фиолетовая тема */
+  --primary-color: #7B2CBF;      /* Основной фиолетовый */
+  --primary-dark: #5A189A;       /* Тёмно-фиолетовый */
+  --primary-light: #9D4EDD;      /* Светло-фиолетовый */
+  --secondary-color: #C77DFF;    /* Дополнительный фиолетовый */
+  --secondary-dark: #B15EFF;     /* Тёмный дополнительный */
+  --secondary-light: #E0AAFF;    /* Светлый дополнительный */
+  --accent-color: #FF7DFF;       /* Акцентный розовый */
+  --accent-dark: #FF5EFF;        /* Тёмный акцентный */
+  --accent-light: #FFAAFF;       /* Светлый акцентный */
   
   /* Нейтральные цвета */
-  --text-color: #2b2d42;
-  --text-light: #6c757d;
-  --text-lighter: #adb5bd;
-  --bg-color: #f8f9fa;
-  --bg-light: #ffffff;
-  --bg-dark: #edf2f7;
+  --text-color: #E2E2E2;         /* Светлый текст */
+  --text-light: #B8B8B8;         /* Приглушенный текст */
+  --text-lighter: #808080;       /* Самый светлый текст */
+  --bg-color: #1A1625;           /* Тёмный фон */
+  --bg-light: #241B2F;           /* Светлее фон */
+  --bg-dark: #13111B;            /* Самый тёмный фон */
   
   /* Тени */
-  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 5px 20px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.15);
-  --shadow-xl: 0 15px 50px rgba(0, 0, 0, 0.2);
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 5px 20px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 15px 50px rgba(0, 0, 0, 0.7);
   
   /* Скругления */
   --radius-xs: 4px;
@@ -325,6 +325,7 @@ a.underline-link:hover::after {
   box-shadow: var(--shadow-sm);
   padding: 2rem;
   transition: var(--transition);
+  border: 1px solid rgba(123, 44, 191, 0.2);
 }
 
 .card:hover {
@@ -345,7 +346,7 @@ a.underline-link:hover::after {
   }
   
   .container {
-    padding: 0 3rem;
+    padding: 0 1.5rem;
   }
 }
 
@@ -384,31 +385,51 @@ a.underline-link:hover::after {
 
 /* Стили для навигации */
 header {
-  background-color: var(--bg-light);
-  box-shadow: var(--shadow-sm);
+  background-color: rgba(19, 17, 27, 0.95); /* Полупрозрачный темный фон */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(123, 44, 191, 0.15);
   position: sticky;
   top: 0;
   z-index: var(--z-fixed);
   height: var(--header-height);
   display: flex;
   align-items: center;
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
 header.scrolled {
-  box-shadow: var(--shadow-md);
   height: calc(var(--header-height) - 1.5rem);
+  background-color: rgba(19, 17, 27, 0.98);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
 }
 
 .logo {
-  font-size: 2.6rem;
-  font-weight: 700;
+  font-size: 2.8rem;
+  font-weight: 800;
   font-family: var(--font-heading);
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(135deg, var(--primary-light), var(--accent-color));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  color: transparent; /* Fallback для браузеров, не поддерживающих text-fill-color */
+  position: relative;
+  padding: 0.5rem 0;
+}
+
+.logo::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.logo:hover::after {
+  opacity: 1;
 }
 
 .logo a {
@@ -428,6 +449,7 @@ nav {
   align-items: center;
   margin: 0;
   padding: 0;
+  gap: 2rem;
 }
 
 .nav-links li {
@@ -437,43 +459,57 @@ nav {
 .nav-links li a {
   font-weight: 500;
   position: relative;
-  color: var(--text-color);
-  padding: 0.5rem 0;
+  color: var(--text-light);
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius-full);
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
 }
 
-.nav-links li a::after {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 2px;
-  bottom: 0;
-  left: 0;
-  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-  transition: var(--transition);
-  border-radius: var(--radius-full);
+.nav-links li a i {
+  font-size: 1.6rem;
+  transition: transform 0.3s ease;
 }
 
 .nav-links li a:hover {
-  color: var(--primary-color);
+  color: var(--primary-light);
+  background: rgba(123, 44, 191, 0.1);
 }
 
-.nav-links li a:hover::after {
-  width: 100%;
+.nav-links li a:hover i {
+  transform: translateY(-2px);
+}
+
+.nav-links li a.active {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
 }
 
 .mobile-menu-btn {
   display: none;
-  background: none;
-  border: none;
+  background: rgba(123, 44, 191, 0.1);
+  border: 1px solid rgba(123, 44, 191, 0.2);
+  border-radius: var(--radius-full);
+  padding: 0.8rem;
   cursor: pointer;
-  font-size: 2.4rem;
-  color: var(--text-color);
+  color: var(--text-light);
+  transition: all 0.3s ease;
+}
+
+.mobile-menu-btn:hover {
+  background: rgba(123, 44, 191, 0.2);
+  color: var(--primary-light);
 }
 
 /* Адаптивная навигация */
 @media (max-width: 992px) {
   .mobile-menu-btn {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   .nav-links {
@@ -482,36 +518,25 @@ nav {
     left: 0;
     width: 100%;
     height: calc(100vh - var(--header-height));
-    background-color: var(--bg-light);
+    background: rgba(19, 17, 27, 0.98);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
     padding-top: 4rem;
     transform: translateX(100%);
-    transition: var(--transition);
-    box-shadow: var(--shadow-md);
-    z-index: var(--z-fixed);
+    transition: transform 0.3s ease-in-out;
+    gap: 2rem;
   }
   
   .nav-links.active {
     transform: translateX(0);
   }
   
-  .nav-links li {
-    margin: 1.5rem 0;
-  }
-  
   .nav-links li a {
     font-size: 1.8rem;
-  }
-  
-  header.scrolled {
-    height: 6rem;
-  }
-  
-  .nav-links.active {
-    top: 6rem;
-    height: calc(100vh - 6rem);
+    padding: 1.2rem 2.4rem;
   }
 }
 
@@ -606,7 +631,7 @@ nav {
 
 /* Стили для футера */
 footer {
-  background: linear-gradient(135deg, var(--text-color), #1a1c2e);
+  background: linear-gradient(135deg, var(--bg-dark), var(--primary-dark));
   color: white;
   padding: 6rem 0 3rem;
   margin-top: 8rem;
@@ -1251,30 +1276,225 @@ img {
 .header-right {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 2rem;
 }
 
 .profile-link {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    color: var(--text-color);
+    gap: 1rem;
+    padding: 0.8rem 1.6rem;
+    color: var(--text-light);
     text-decoration: none;
-    border-radius: var(--radius-md);
-    transition: all 0.2s ease;
+    border-radius: var(--radius-full);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(123, 44, 191, 0.2);
+    background: rgba(123, 44, 191, 0.05);
 }
 
 .profile-link:hover {
-    background: var(--primary-light);
-    color: var(--primary-color);
+    background: rgba(123, 44, 191, 0.15);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
 }
 
 .profile-link.active {
-    background: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: white;
+    border: none;
 }
 
 .profile-link i {
+    font-size: 1.8rem;
+    transition: transform 0.3s ease;
+}
+
+.profile-link:hover i {
+    transform: rotate(15deg);
+}
+
+/* Добавляем стили для выделенного текста */
+::selection {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* Обновляем стили для форм */
+input, textarea, select {
+  background-color: var(--bg-light);
+  border: 1px solid rgba(123, 44, 191, 0.3);
+  color: var(--text-color);
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(123, 44, 191, 0.2);
+}
+
+/* Обновляем базовые размеры для мобильных устройств */
+@media (max-width: 992px) {
+  :root {
+    --header-height: 6rem;
+  }
+
+  /* Уменьшаем размер контейнера */
+  .container {
+    padding: 0 1.5rem;
+  }
+
+  /* Обновляем стили навигации */
+  nav {
+    padding: 0 1rem;
+  }
+
+  .logo {
+    font-size: 2.2rem;
+    padding: 0.3rem 0;
+  }
+
+  /* Обновляем мобильное меню */
+  .mobile-menu-btn {
+    width: 4rem;
+    height: 4rem;
+    padding: 0.5rem;
+    font-size: 2rem;
+  }
+
+  /* Обновляем выпадающее меню */
+  .nav-links {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    width: 100%;
+    height: calc(100vh - var(--header-height));
+    background: rgba(19, 17, 27, 0.98);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    flex-direction: column;
+    padding: 2rem;
+    gap: 1rem;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .nav-links.active {
+    transform: translateX(0);
+  }
+
+  .nav-links li {
+    width: 100%;
+    margin: 0;
+  }
+
+  .nav-links li a {
+    width: 100%;
+    padding: 1.2rem;
+    justify-content: center;
     font-size: 1.6rem;
+  }
+
+  /* Обновляем правую часть хедера */
+  .header-right {
+    gap: 1rem;
+  }
+
+  .profile-link {
+    padding: 0.6rem 1rem;
+    font-size: 1.4rem;
+  }
+
+  .profile-link i {
+    font-size: 1.6rem;
+  }
+
+  /* Скрываем текст на маленьких экранах, оставляем только иконки */
+  .profile-link span {
+    display: none;
+  }
+}
+
+/* Дополнительные стили для очень маленьких экранов */
+@media (max-width: 576px) {
+  :root {
+    --header-height: 5.5rem;
+  }
+
+  .logo {
+    font-size: 2rem;
+  }
+
+  nav {
+    padding: 0 0.8rem;
+  }
+
+  .mobile-menu-btn {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  /* Компактное расположение элементов */
+  .header-right {
+    gap: 0.8rem;
+  }
+
+  .profile-link {
+    padding: 0.5rem;
+    min-width: 3.5rem;
+    height: 3.5rem;
+    justify-content: center;
+  }
+
+  /* Оптимизация выпадающего меню */
+  .nav-links {
+    padding: 1.5rem;
+  }
+
+  .nav-links li a {
+    padding: 1rem;
+    font-size: 1.4rem;
+  }
+
+  /* Улучшаем читаемость на маленьких экранах */
+  .nav-links li a i {
+    font-size: 1.8rem;
+    margin-right: 1rem;
+  }
+}
+
+/* Стили для устройств с очень маленьким экраном */
+@media (max-width: 360px) {
+  :root {
+    --header-height: 5rem;
+  }
+
+  .logo {
+    font-size: 1.8rem;
+  }
+
+  .mobile-menu-btn,
+  .profile-link {
+    width: 3.2rem;
+    height: 3.2rem;
+  }
+
+  /* Минимизируем отступы */
+  nav {
+    padding: 0 0.5rem;
+  }
+
+  .header-right {
+    gap: 0.5rem;
+  }
+}
+
+/* Добавляем поддержку ландшафтной ориентации */
+@media (max-height: 500px) and (orientation: landscape) {
+  .nav-links {
+    padding: 1rem;
+    overflow-y: auto;
+  }
+
+  .nav-links li a {
+    padding: 0.8rem;
+  }
 } 
