@@ -100,10 +100,30 @@ class StudentDetailView(View):
     
     def get(self, request, student_id, *args, **kwargs):
         user_info = request.user_info
+        is_authenticated = request.is_authenticated
         
+        # Проверяем авторизацию и тип пользователя
+        if not is_authenticated or user_info.get('user_type') != 'teacher':
+            messages.error(request, 'Доступ запрещен. Требуются права учителя.')
+            return redirect('home_page')
+            
+        # Получаем класс учителя
+        teacher_class = Class.objects.filter(teacher_id=user_info['user_id']).first()
+        if not teacher_class:
+            messages.error(request, 'У вас нет созданного класса')
+            return redirect('teacher_dashboard')
+
+        # Проверяем, что ученик принадлежит классу этого учителя
+        if not ClassStudent.objects.filter(
+            class_group=teacher_class,
+            student_id=student_id
+        ).exists():
+            messages.error(request, 'Этот ученик не принадлежит вашему классу')
+            return redirect('teacher_dashboard')
+
         # Получаем ученика со всей необходимой статистикой
-        student = get_object_or_404(
-            User.objects.annotate(
+        try:
+            student = User.objects.annotate(
                 total_tests=Count('test_attempts__test', distinct=True),
                 completed_tests=Count(
                     'test_attempts__test',
@@ -115,74 +135,54 @@ class StudentDetailView(View):
                     filter=Q(test_attempts__status='awaiting_review'),
                     distinct=True
                 ),
-                total_answers=Count(
-                    'test_attempts__answers',
+                # Получаем сумму полученных баллов
+                total_points_earned=Sum(
+                    'test_attempts__answers__points_awarded',
                     filter=Q(test_attempts__status='reviewed')
                 ),
-                correct_answers_count=Count(
-                    'test_attempts__answers',
-                    filter=Q(
-                        test_attempts__status='reviewed'
-                    ) & (
-                        Q(
-                            test_attempts__answers__question__question_type='part_a',
-                            test_attempts__answers__is_correct=True
-                        ) |
-                        Q(
-                            test_attempts__answers__question__question_type='part_b',
-                            test_attempts__answers__points_awarded=2
-                        )
-                    )
-                ),
-                incorrect_answers_count=Count(
-                    'test_attempts__answers',
-                    filter=Q(
-                        test_attempts__status='reviewed'
-                    ) & (
-                        Q(
-                            test_attempts__answers__question__question_type='part_a',
-                            test_attempts__answers__is_correct=False
-                        ) |
-                        Q(
-                            test_attempts__answers__question__question_type='part_b',
-                            test_attempts__answers__points_awarded=0
-                        )
-                    )
+                # Получаем сумму максимально возможных баллов
+                total_points_possible=Sum(
+                    'test_attempts__answers__question__points',
+                    filter=Q(test_attempts__status='reviewed')
                 )
-            ),
-            id=student_id,
-            user_type='student'
-        )
-        
-        # Вычисляем количество правильных и неправильных ответов
-        total_answers = student.correct_answers_count + student.incorrect_answers_count
-        correct_answers_percent = (
-            (student.correct_answers_count / total_answers * 100)
-            if total_answers > 0 else 0
-        )
-        incorrect_answers_percent = (
-            (student.incorrect_answers_count / total_answers * 100)
-            if total_answers > 0 else 0
-        )
+            ).get(id=student_id, user_type='student')
 
-        # Вычисляем процент выполненных тестов
-        tests_completion = {
-            'completed': student.completed_tests,
-            'awaiting': student.awaiting_tests,
-            'not_started': student.total_tests - student.completed_tests - student.awaiting_tests
-        }
+            # Вычисляем процент правильных ответов на основе баллов
+            total_points_earned = student.total_points_earned or 0
+            total_points_possible = student.total_points_possible or 0
+            
+            if total_points_possible > 0:
+                correct_answers_percent = (total_points_earned / total_points_possible) * 100
+                incorrect_answers_percent = 100 - correct_answers_percent
+            else:
+                correct_answers_percent = 0
+                incorrect_answers_percent = 0
 
-        context = {
-            'title': f'Ученик: {student.username}',
-            'user_info': user_info,
-            'student': student,
-            'correct_answers_percent': round(correct_answers_percent, 1),
-            'incorrect_answers_percent': round(incorrect_answers_percent, 1),
-            'tests_completion': tests_completion,
-            'active_page': 'students'
-        }
+            # Вычисляем процент выполненных тестов
+            tests_completion = {
+                'completed': student.completed_tests,
+                'awaiting': student.awaiting_tests,
+                'not_started': student.total_tests - student.completed_tests - student.awaiting_tests
+            }
+
+            context = {
+                'title': f'Ученик: {student.username}',
+                'user_info': user_info,
+                'is_authenticated': is_authenticated,
+                'student': student,
+                'correct_answers_percent': round(correct_answers_percent, 1),
+                'incorrect_answers_percent': round(incorrect_answers_percent, 1),
+                'tests_completion': tests_completion,
+                'total_points_earned': total_points_earned,
+                'total_points_possible': total_points_possible,
+                'active_page': 'students'
+            }
+            
+            return render(request, self.template_name, context)
         
-        return render(request, self.template_name, context)
+        except User.DoesNotExist:
+            messages.error(request, 'Ученик не найден')
+            return redirect('teacher_dashboard')
 
 class StudentTestsView(View):
     template_name = 'teacher/student_tests.html'

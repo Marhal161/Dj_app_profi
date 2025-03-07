@@ -114,19 +114,15 @@ def refresh_access_token(refresh_token):
 
 def teacher_required(view_func):
     def wrapper(request, *args, **kwargs):
-        # Проверяем, что пользователь авторизован
-        if not hasattr(request, 'user_info'):
-            return JsonResponse({
-                'success': False,
-                'error': 'Необходимо войти в систему'
-            }, status=401)
+        # Проверяем, что пользователь авторизован и информация о нем доступна
+        if not hasattr(request, 'user_info') or not request.user_info:
+            messages.error(request, 'Необходимо войти в систему')
+            return redirect('login_page')
         
         # Проверяем, что пользователь является учителем
         if request.user_info.get('user_type') != 'teacher':
-            return JsonResponse({
-                'success': False,
-                'error': 'Доступ запрещен. Требуются права учителя.'
-            }, status=403)
+            messages.error(request, 'Доступ запрещен. Требуются права учителя.')
+            return redirect('home_page')
         
         return view_func(request, *args, **kwargs)
     return wrapper
