@@ -165,6 +165,16 @@ class StudentDetailView(View):
                 'not_started': student.total_tests - student.completed_tests - student.awaiting_tests
             }
 
+            # Получаем 10 последних попыток тестов этого ученика
+            recent_attempts = TestAttempt.objects.filter(
+                user_id=student_id,
+                status='reviewed'  # только проверенные тесты
+            ).select_related(
+                'test'  # подгружаем связанный тест
+            ).order_by(
+                '-completed_at'  # сортируем по дате завершения (новые сверху)
+            )[:10]
+
             context = {
                 'title': f'Ученик: {student.username}',
                 'user_info': user_info,
@@ -175,6 +185,7 @@ class StudentDetailView(View):
                 'tests_completion': tests_completion,
                 'total_points_earned': total_points_earned,
                 'total_points_possible': total_points_possible,
+                'recent_attempts': recent_attempts,
                 'active_page': 'students'
             }
             

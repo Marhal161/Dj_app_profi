@@ -59,6 +59,47 @@
                     <span class="stat-value correct">{{ correct_answers_percent }}%</span>
                 </div>
             </div>
+
+            <div class="recent-tests-table">
+                <h3>Последние тесты</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Название теста</th>
+                                <th>Дата завершения</th>
+                                <th>Баллы</th>
+                                <th>Процент</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attempt in recent_attempts %}
+                            <tr>
+                                <td>{{ attempt.test.title }}</td>
+                                <td>{{ attempt.completed_at|date:"d.m.Y H:i" }}</td>
+                                <td>{{ attempt.score }} / {{ attempt.max_score }}</td>
+                                <td>
+                                    <span class="badge {% if attempt.get_percent_score >= 70 %}bg-success{% elif attempt.get_percent_score >= 40 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ attempt.get_percent_score }}%
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'test_review_detail' attempt_id=attempt.id %}" 
+                                       class="btn btn-sm btn-primary">
+                                        Просмотр
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">Нет завершенных тестов</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -132,4 +173,100 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<style>
+.recent-tests-table {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.recent-tests-table h3 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.table {
+    margin-bottom: 0;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table th {
+    border-top: none;
+    color: #2c3e50;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    padding: 15px;
+    border-bottom: 2px solid #eef2f7;
+    background-color: #f8fafc;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 15px;
+    border-bottom: 1px solid #eef2f7;
+    color: #2c3e50;
+    font-size: 0.95rem;
+}
+
+.table tr:hover {
+    background-color: #f8fafc;
+    transition: background-color 0.2s ease;
+}
+
+.badge {
+    padding: 6px 10px;
+    font-weight: 500;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    letter-spacing: 0.3px;
+}
+
+.bg-success {
+    background-color: #10b981 !important;
+}
+
+.bg-warning {
+    background-color: #f59e0b !important;
+}
+
+.bg-danger {
+    background-color: #ef4444 !important;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.875rem;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    background-color: #3b82f6;
+    border: none;
+}
+
+.btn-sm:hover {
+    background-color: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Стили для пустой таблицы */
+.table td.text-center {
+    padding: 30px;
+    color: #64748b;
+    font-style: italic;
+}
+</style>
 {% endblock %} 
