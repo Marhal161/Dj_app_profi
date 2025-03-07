@@ -127,6 +127,11 @@ class ClassView(View):
                         'error': 'Вы не состоите в классе'
                     })
 
+                # Удаляем все заявки ученика
+                ClassInvitation.objects.filter(
+                    student_id=request.user_info['user_id']
+                ).delete()
+
                 # Удаляем ученика из класса
                 class_student.delete()
 
