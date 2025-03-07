@@ -22,11 +22,46 @@ class User(AbstractUser):
         verbose_name=_('класс')
     )
     
+    rating = models.IntegerField(
+        default=0,
+        verbose_name=_('рейтинг')
+    )
+    
+    # Добавим связь для отслеживания лайков
+    liked_by = models.ManyToManyField(
+        'self',
+        symmetrical=False,
+        related_name='liked_teachers',
+        verbose_name=_('понравилось ученикам'),
+        blank=True
+    )
+    
+    disliked_by = models.ManyToManyField(
+        'self',
+        symmetrical=False,
+        related_name='disliked_teachers',
+        verbose_name=_('не понравилось ученикам'),
+        blank=True
+    )
+    
     def is_teacher(self):
         return self.user_type == 'teacher'
     
     def is_student(self):
         return self.user_type == 'student'
+    
+    def get_rating_stats(self):
+        return {
+            'likes': self.liked_by.count(),
+            'dislikes': self.disliked_by.count(),
+            'rating': self.rating
+        }
+    
+    def get_rating_percentage(self):
+        total = self.liked_by.count() + self.disliked_by.count()
+        if total == 0:
+            return 0
+        return int((self.liked_by.count() / total) * 100)
     
     class Meta:
         verbose_name = _('пользователь')

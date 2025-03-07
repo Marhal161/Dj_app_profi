@@ -1,27 +1,37 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import View
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, F
 from ..models import Class, User, ClassStudent, ClassInvitation
 from ..decorators import check_auth_tokens, teacher_required
 from django.utils.decorators import method_decorator
 import json
 from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 class ClassView(View):
     template_name = 'class.html'
     
     @method_decorator(check_auth_tokens)
     def dispatch(self, request, *args, **kwargs):
+        # Проверяем аутентификацию
+        if not request.is_authenticated:
+            messages.error(request, 'Необходимо войти в систему')
+            return redirect('login_page')
+            
+        # Получаем информацию о пользователе
+        user_info = request.user_info
+        
+        # Проверяем тип пользователя
+        if user_info['user_type'] not in ['teacher', 'student']:
+            messages.error(request, 'Доступ запрещен')
+            return redirect('home_page')
+            
         return super().dispatch(request, *args, **kwargs)
     
     def get(self, request, class_id=None, *args, **kwargs):
         user_info = request.user_info
         is_authenticated = request.is_authenticated
-        
-        if not is_authenticated:
-            messages.error(request, 'Необходимо войти в систему')
-            return redirect('login_page')
         
         context = {
             'title': 'Мой класс',
@@ -69,9 +79,16 @@ class ClassView(View):
             ).select_related('class_group', 'class_group__teacher')
             
             if student_class:
+                # Получаем учителя
+                teacher = student_class.class_group.teacher
+                has_liked = teacher.liked_by.filter(id=user_info['user_id']).exists()
+                has_disliked = teacher.disliked_by.filter(id=user_info['user_id']).exists()
+                
                 context.update({
                     'class': student_class.class_group,
-                    'teacher': student_class.class_group.teacher,
+                    'teacher': teacher,
+                    'has_liked': has_liked,
+                    'has_disliked': has_disliked,
                     'classmates': ClassStudent.objects.filter(
                         class_group=student_class.class_group
                     ).select_related('student').exclude(student__id=user_info['user_id']),
@@ -268,4 +285,80 @@ class RenameClassView(View):
             return JsonResponse({'success': True})
             
         except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)}) 
+            return JsonResponse({'success': False, 'error': str(e)})
+
+class TeacherRatingView(View):
+    @method_decorator(check_auth_tokens)
+    @method_decorator(require_POST)
+    def post(self, request, teacher_id):
+        if not request.user_info or request.user_info['user_type'] != 'student':
+            return JsonResponse({
+                'success': False,
+                'error': 'Только ученики могут оценивать учителей'
+            })
+
+        try:
+            # Получаем данные из JSON
+            data = json.loads(request.body)
+            action = data.get('action', 'like')  # Изменено с request.POST на data.get()
+            
+            teacher = User.objects.get(id=teacher_id, user_type='teacher')
+            student = User.objects.get(id=request.user_info['user_id'])
+
+            # Проверяем текущее состояние
+            is_liked = teacher.liked_by.filter(id=student.id).exists()
+            is_disliked = teacher.disliked_by.filter(id=student.id).exists()
+
+            # Убираем существующие оценки
+            if is_liked:
+                teacher.liked_by.remove(student)
+                teacher.rating = F('rating') - 1
+                teacher.save()
+                
+            if is_disliked:
+                teacher.disliked_by.remove(student)
+                teacher.rating = F('rating') + 1
+                teacher.save()
+
+            # Добавляем новую оценку, только если это не та же самая оценка
+            if action == 'like' and not is_liked:
+                teacher.liked_by.add(student)
+                teacher.rating = F('rating') + 1
+                teacher.save()
+                liked = True
+                disliked = False
+            elif action == 'dislike' and not is_disliked:
+                teacher.disliked_by.add(student)
+                teacher.rating = F('rating') - 1
+                teacher.save()
+                liked = False
+                disliked = True
+            else:
+                liked = False
+                disliked = False
+
+            # Получаем обновленный рейтинг
+            teacher.refresh_from_db()
+            
+            return JsonResponse({
+                'success': True,
+                'rating': teacher.rating,
+                'liked': liked,
+                'disliked': disliked
+            })
+
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Неверный формат данных'
+            })
+        except User.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Учитель не найден'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }) 

@@ -28,7 +28,8 @@ def check_auth_tokens(view_func):
         if not access_token or not refresh_token:
             request.user_info = None
             request.is_authenticated = False
-            return view_func(request, *args, **kwargs)  # Позволяем продолжить без авторизации
+            # Убираем автоматический редирект на страницу логина
+            return view_func(request, *args, **kwargs)
         
         try:
             # Пытаемся декодировать access_token используя SimpleJWT

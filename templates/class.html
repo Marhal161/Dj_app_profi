@@ -4,6 +4,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="/static/css/class.css">
+<link rel="stylesheet" href="/static/css/teacher_rating.css">
 {% endblock %}
 
 {% block content %}
@@ -229,8 +230,29 @@
         {% else %}
             <div class="class-header">
                 <div class="header-content">
-                    <h1>{{ class.name }}</h1>
-                    <p>Учитель: {{ teacher.username }}</p>
+                    <div class="class-info">
+                        <h1>{{ class.name }}</h1>
+                    </div>
+                    <div class="teacher-info">
+                        <p>Учитель: {{ teacher.username }}</p>
+                        {% if is_student and not no_class %}
+                            <div class="teacher-rating">
+                                <button id="likeTeacher" 
+                                        class="btn btn-rating {% if has_liked %}active{% endif %}"
+                                        data-teacher-id="{{ teacher.id }}"
+                                        data-action="like">
+                                    <i class="fas fa-thumbs-up"></i>
+                                    <span class="rating-count">{{ teacher.rating }}</span>
+                                </button>
+                                <button id="dislikeTeacher" 
+                                        class="btn btn-rating dislike {% if has_disliked %}active{% endif %}"
+                                        data-teacher-id="{{ teacher.id }}"
+                                        data-action="dislike">
+                                    <i class="fas fa-thumbs-down"></i>
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
@@ -415,11 +437,56 @@
                 }, 300); // Удаляем элемент через 300 мс после анимации
             }, 3000); // 3000 мс = 3 секунды
         });
+
+        const rateButton = document.getElementById('rateTeacher');
+        
+        if (rateButton) {
+            rateButton.addEventListener('click', function() {
+                const teacherId = this.dataset.teacherId;
+                
+                fetch(`/app/api/teacher/${teacherId}/rate/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Обновляем счетчик лайков
+                        const ratingCount = this.querySelector('.rating-count');
+                        ratingCount.textContent = data.rating;
+                        
+                        // Обновляем состояние кнопки
+                        if (data.liked) {
+                            this.classList.add('liked');
+                        } else {
+                            this.classList.remove('liked');
+                        }
+                        
+                        // Показываем сообщение
+                        showMessage('success', data.liked ? 
+                            'Вы поставили лайк учителю!' : 
+                            'Вы убрали свой лайк'
+                        );
+                    } else {
+                        showMessage('error', data.error || 'Произошла ошибка');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('error', 'Произошла ошибка при выполнении запроса');
+                });
+            });
+        }
     });
 </script>
 {% endblock %}
 
 {% block extra_js %}
+<script src="/static/js/utilities.js"></script>
 <script src="/static/js/modal.js"></script>
 <script src="/static/js/class.js"></script>
+<script src="/static/js/teacher_rating.js"></script>
 {% endblock %} 

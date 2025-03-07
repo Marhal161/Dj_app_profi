@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -5,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Химия{% endblock %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -29,6 +31,7 @@
                     <li><a href="/app/"><i class="fas fa-home"></i> Главная</a></li>
                     <li><a href="/app/articles/"><i class="fas fa-file-alt"></i> Статьи</a></li>
                     <li><a href="/app/tests/"><i class="fas fa-vial"></i> Тесты</a></li>
+                    <li><a href="{% url 'teacher_ratings' %}"><i class="fas fa-trophy"></i> Рейтинг учителей</a></li>
                     {% if is_authenticated %}
                         <li><a href="/app/materials/"><i class="fas fa-book"></i> Материалы</a></li>
                         {% if user_info.user_type == 'teacher' %}
@@ -97,7 +100,7 @@
         </div>
     </footer>
 
-    <script src="/static/js/main.js"></script>
+    <script src="{% static 'js/main.js' %}"></script>
     {% block scripts %}{% endblock %}
     {% block extra_js %}{% endblock extra_js %}
 </body>

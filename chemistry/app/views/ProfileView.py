@@ -6,22 +6,26 @@ from ..decorators import check_auth_tokens
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 import json
+from django.contrib import messages
 
 class ProfileView(View):
+    template_name = 'profile.html'
+    
     @method_decorator(check_auth_tokens)
     def get(self, request, *args, **kwargs):
         user_info = request.user_info
         is_authenticated = request.is_authenticated
         
         if not is_authenticated:
-            return redirect('login')
+            messages.error(request, 'Необходимо войти в систему')
+            return redirect('login_page')
         
         user = User.objects.get(id=user_info['user_id'])
+        
         context = {
             'title': 'Профиль',
             'user_info': user_info,
             'is_authenticated': is_authenticated,
-            'active_page': 'profile',
             'user': user
         }
         
@@ -107,9 +111,14 @@ class ProfileView(View):
             teacher_class = Class.objects.filter(teacher_id=user.id).first()
             students_count = ClassStudent.objects.filter(class_group=teacher_class).count() if teacher_class else 0
             
+            rating_stats = user.get_rating_stats()
+            rating_percentage = user.get_rating_percentage()
+            
             context.update({
                 'teacher_class': teacher_class,
                 'students_count': students_count,
+                'rating_stats': rating_stats,
+                'rating_percentage': rating_percentage
             })
             return render(request, 'profile/teacher_profile.html', context)
 

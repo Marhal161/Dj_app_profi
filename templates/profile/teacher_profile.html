@@ -39,6 +39,42 @@
                 <p class="no-class">У вас пока нет назначенного класса</p>
                 {% endif %}
             </div>
+
+            <!-- Добавляем блок статистики рейтинга -->
+            <div class="rating-stats-container">
+                <h3>Статистика рейтинга</h3>
+                <div class="rating-stats">
+                    <div class="rating-item">
+                        <i class="fas fa-thumbs-up text-success"></i>
+                        <span class="rating-count">{{ rating_stats.likes }}</span>
+                        <span class="rating-label">Лайков</span>
+                    </div>
+                    <div class="rating-item">
+                        <i class="fas fa-thumbs-down text-danger"></i>
+                        <span class="rating-count">{{ rating_stats.dislikes }}</span>
+                        <span class="rating-label">Дизлайков</span>
+                    </div>
+                    <div class="rating-item">
+                        <i class="fas fa-star text-warning"></i>
+                        <span class="rating-count">{{ rating_stats.rating }}</span>
+                        <span class="rating-label">Общий рейтинг</span>
+                    </div>
+                </div>
+                
+                <div class="rating-progress">
+                    <div class="progress">
+                        <div class="progress-bar bg-success" 
+                             role="progressbar" 
+                             style="width: {{ rating_percentage }}%"
+                             aria-valuenow="{{ rating_percentage }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            {{ rating_percentage }}%
+                        </div>
+                    </div>
+                    <span class="progress-label">Процент положительных оценок</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>

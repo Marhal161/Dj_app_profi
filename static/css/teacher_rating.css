@@ -1,0 +1,74 @@
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.teacher-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.teacher-rating {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-rating {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 1.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-rating:hover {
+    transform: scale(1.1);
+}
+
+.btn-rating.active {
+    animation: pulse 0.3s ease;
+}
+
+.btn-rating.active i {
+    animation: bounce 0.5s ease;
+}
+
+.btn-rating:hover i {
+    transform: scale(1.2);
+}
+
+/* Стили для лайка */
+.btn-rating:not(.dislike).active {
+    color: #4CAF50;
+}
+
+/* Стили для дизлайка */
+.btn-rating.dislike.active {
+    color: #ff4757;
+}
+
+.rating-count {
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+} 

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} | Химия{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/teacher_ratings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="ratings-container">
+    <div class="ratings-header">
+        <h1>Рейтинг учителей</h1>
+        <p class="ratings-description">Список учителей, отсортированный по рейтингу</p>
+    </div>
+
+    <div class="teachers-list">
+        {% for teacher in teachers %}
+        <div class="teacher-card">
+            <div class="teacher-rank">{{ forloop.counter }}</div>
+            <div class="teacher-info">
+                <div class="teacher-avatar">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <div class="teacher-details">
+                    <h3 class="teacher-name">{{ teacher.get_full_name|default:teacher.username }}</h3>
+                    <p class="teacher-username">@{{ teacher.username }}</p>
+                </div>
+            </div>
+            <div class="teacher-stats">
+                <div class="stat-item likes">
+                    <i class="fas fa-thumbs-up"></i>
+                    <span>{{ teacher.likes_count }}</span>
+                </div>
+                <div class="stat-item dislikes">
+                    <i class="fas fa-thumbs-down"></i>
+                    <span>{{ teacher.dislikes_count }}</span>
+                </div>
+                <div class="stat-item rating">
+                    <i class="fas fa-star"></i>
+                    <span>{{ teacher.rating }}</span>
+                </div>
+            </div>
+            <div class="rating-progress">
+                {% with percentage=teacher.get_rating_percentage %}
+                <div class="progress">
+                    <div class="progress-bar" 
+                         role="progressbar" 
+                         style="width: {{ percentage }}%"
+                         aria-valuenow="{{ percentage }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                        {{ percentage }}%
+                    </div>
+                </div>
+                {% endwith %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="no-teachers">
+            <i class="fas fa-user-slash"></i>
+            <p>Пока нет учителей в рейтинге</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 
